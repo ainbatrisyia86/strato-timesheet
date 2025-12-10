@@ -17,6 +17,10 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    //Disable timestamps 
+    public $timestamps = false;
+
     protected $fillable = [
         'name',
         'email',

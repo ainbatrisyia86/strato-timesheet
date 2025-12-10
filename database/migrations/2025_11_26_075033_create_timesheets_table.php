@@ -13,28 +13,18 @@ return new class extends Migration
 {
     Schema::create('timesheets', function (Blueprint $table) {
         $table->id();
-        $table->unsignedBigInteger('user_id');
-
-        $table->integer('week');       
-        $table->integer('month');      
-        $table->integer('year');      
-
-        $table->string('position');  
-        $table->date('date');          
-
-        $table->string('project');   
-        $table->string('task');        
-
-        $table->time('start_time');    
-        $table->time('end_time');      
-
-        $table->decimal('total_hours', 5, 2); 
-        
-        $table->string('status')->default('draft'); // draft/submitted
+        $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+        $table->integer('week');
+        $table->string('month');
+        $table->integer('year');
+        //$table->string('position');
+        $table->string('status')->default('draft'); // draft | submitted
         $table->timestamps();
+
+        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
     });
 }
-
     /**
      * Reverse the migrations.
      */
