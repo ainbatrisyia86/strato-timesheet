@@ -96,7 +96,8 @@
         </table>
     </div>
 
-    <!-- Back Button -->
+    {{-- 
+    /*<!-- Back Button -->
     <div class="flex justify-center mt-8">
         <a href="{{ route('timesheet.index') }}"
            class="px-6 py-2 rounded flex text-white font-semibold shadow"
@@ -104,6 +105,7 @@
             BACK
         </a>
     </div>
+    --}}
 
 </div>
 @endsection

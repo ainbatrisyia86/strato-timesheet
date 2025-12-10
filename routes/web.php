@@ -1,12 +1,16 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CustomAuthController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimesheetController;
-use App\Http\Controllers\TimesheetRowController;
+use App\Http\Controllers\CustomAuthController;
+use App\Http\Controllers\SettingsController;
 
-
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
     return view('welcome');
 });
@@ -15,43 +19,74 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATION ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::get('/login', [CustomAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [CustomAuthController::class, 'login']);
 Route::post('/logout', [CustomAuthController::class, 'logout'])->name('logout');
 
-//Profile
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATED ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
+
+    // ---------------------------
+    // User Profile
+    // ---------------------------
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-//Weekly Timesheet Route
-    Route::get('/timesheet', [TimesheetController::class, 'index'])->name('timesheet.index');
-    Route::get('/timesheet/add', [TimesheetController::class, 'create'])->name('timesheet.create');
-    Route::get('/timesheet/{id}', [TimesheetController::class, 'show'])->name('timesheet.show');
-    Route::get('/timesheet/{id}/edit', [TimesheetController::class, 'edit'])->name('timesheet.edit');
+ // ---------------------------
+    // Staff Routes (record timesheet only)
+    // ---------------------------
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':staff')->group(function () {
+        Route::get('/record-timesheet', function () {
+            return view('timesheet.record');
+        })->name('timesheet.record');
+    });
 
-    //Timesheet Routes
-    Route::middleware(['auth'])->group(function () {
-    Route::get('/timesheet', [TimesheetController::class, 'index'])->name('timesheet.index'); //list timesheets by week
-    Route::get('/timesheet/create', [TimesheetController::class, 'create'])->name('timesheet.create'); //create new timesheet
-    Route::post('/timesheet', [TimesheetController::class, 'store'])->name('timesheet.store'); //save data
-    Route::resource('timesheet', TimesheetController::class)->middleware('auth');
-    Route::post('/timesheet/store', [TimesheetController::class, 'store'])->name('timesheet.store');
-    //Route::post('/timesheet-rows', [TimesheetRowController::class, 'store'])->name(name: 'timesheet-rows.store');
-    Route::get('/timesheet/{id}/edit', [TimesheetController::class, 'edit'])->name('timesheet.edit');
-    Route::put('/timesheet/{id}', [TimesheetController::class, 'update'])->name('timesheet.update');
+    // HR Routes (view timesheets + settings)
+    Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':hr')->group(function () {
+
+        Route::prefix('hr')->group(function () {
+
+            Route::get('/viewTS', [TimesheetController::class, 'viewTS'])->name('hr.viewTS');
+            Route::get('/timesheets', [TimesheetController::class, 'indexHr'])->name('hr.timesheets');
+
+            // View all timesheets for a specific user
+            Route::get('/hr/timesheet/{user}', [TimesheetController::class, 'showStaff'])->name('timesheet.view');
+
+            // View SINGLE timesheet details page
+            Route::get('/timesheet/details/{id}', [TimesheetController::class, 'details'])
+                ->name('timesheet.details');
+        });
+
+        Route::get('/hr/generate-report', [TimesheetController::class, 'generateReport'])
+            ->name('hr.generateReport');
+
+        // Settings routes
+        Route::prefix('settings')->group(function () {
+            Route::get('/users', [SettingsController::class, 'manageUsers'])->name('manage.users');
+            Route::get('/projects', [SettingsController::class, 'manageProjects'])->name('manage.projects');
+            Route::get('/configuration', [SettingsController::class, 'config'])->name('settings.configuration');
+        });
+    });
 
 
-    Route::middleware('auth')->group(function () {
-
-    Route::resource('timesheet', TimesheetController::class);
-
+    // ---------------------------
+    // Admin Routes (view timesheets + settings)
+    // ---------------------------
+    Route::get('/admin', function () {
+        return 'Admin Page';
+    })->middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin');
 });
 
-});
-});
-
-
-
+/* Include Laravel auth scaffolding (Breeze / Fortify routes) */
 require __DIR__.'/auth.php';
+

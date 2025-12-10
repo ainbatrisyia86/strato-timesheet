@@ -19,21 +19,27 @@
 </head>
 <body class="font-sans antialiased">
 
-    <div class="min-h-screen bg-white-100 dark:bg-white-900">
+    <!-- Main container with always white background -->
+    <div class="min-h-screen bg-white">
 
+        {{-- Navigation --}}
         @include('layouts.navigation')
 
-        <!-- Page Heading (optional header section) -->
+        {{-- Page Heading (optional header section) --}}
         @isset($header)
-            <header class="bg-white dark:bg-gray-800 shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <header class="bg-white shadow flex justify-center">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
                     {{ $header }}
                 </div>
             </header>
         @endisset
 
-        <!-- Page Content with space below top bar -->
-        <main class="pt-24"> 
+        {{-- Page Content --}}
+        <main class="pt-6 sm:pt-8 lg:pt-12">
+            @isset($slot)
+                {{ $slot }}
+            @endisset
+
             @yield('content')
         </main>
 

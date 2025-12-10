@@ -2,27 +2,49 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Timesheet extends Model
 {
-    // Add 'date' to fillable so you can mass-assign it
+    use HasFactory;
+
+    // ------------------------------
+    // Mass assignable fields
+    // ------------------------------
     protected $fillable = [
         'user_id',
         'week',
         'month',
         'year',
-        //'position',
-        'status'
+        'date',        // optional, if tracking individual row dates
+        'project',     // optional, if storing summary info
+        'task',        // optional
+        'start_time',  // optional
+        'end_time',    // optional
+        'total_hours', // optional
+        'status',
+        'role',        // optional, e.g., user role
     ];
 
-    // If you want to use timestamps, set this to true
-    // public $timestamps = true;
-    // Otherwise, leave it false
+    // ------------------------------
+    // Timestamps
+    // ------------------------------
+    // Set to true if you want created_at / updated_at automatic handling
     public $timestamps = false;
 
-   public function rows()
+    // ------------------------------
+    // Relationships
+    // ------------------------------
+
+    // Each timesheet belongs to a user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // Each timesheet can have many rows
+    public function rows()
     {
         return $this->hasMany(TimesheetRow::class);
     }
