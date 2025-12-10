@@ -150,7 +150,7 @@
                                 <tr class="hover:bg-blue-50" style="background-color: #F3F3F3;">
                                     <td class="px-6 py-4 border border-gray-300 text-sm">{{ $index + 1 }}</td>
                                     <td class="px-6 py-4 border border-gray-300 text-sm">
-                                     <a href="{{ route('timesheet.view', ['user' => $timesheet->user->id]) }}"
+                                     <a href="{{ route('timesheet.view', ['userId' => $timesheet->user->id]) }}"
                                     class="text-blue-800 hover:underline">
                                     {{ $timesheet->user->name }}
                                     </a>

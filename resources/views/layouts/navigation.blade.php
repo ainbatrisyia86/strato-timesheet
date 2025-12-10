@@ -24,7 +24,7 @@
                             {{ __('Timesheet') }}
                         </x-nav-link>
                     @elseif(Auth::user()->role === 'staff')
-                        <x-nav-link :href="route('timesheet.record')" :active="request()->routeIs('timesheet.record')">
+                        <x-nav-link :href="route('timesheet.index')" :active="request()->routeIs('timesheet.index')">
                             {{ __('Timesheet') }}
                         </x-nav-link>
                     @endif
@@ -99,7 +99,7 @@
                 <x-responsive-nav-link :href="route('manage.projects')">Manage Projects</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('settings.configuration')">Set Configuration Settings</x-responsive-nav-link>
             @elseif(Auth::user()->role === 'staff')
-                <x-responsive-nav-link :href="route('timesheet.record')">Timesheet</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('timesheet.create')">Timesheet</x-responsive-nav-link>
             @endif
         </div>
 
