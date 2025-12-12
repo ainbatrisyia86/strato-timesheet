@@ -44,8 +44,16 @@ class Timesheet extends Model
     }
 
     // Each timesheet can have many rows
+    // app/Models/Timesheet.php
+
     public function rows()
     {
         return $this->hasMany(TimesheetRow::class);
     }
+
+    public function getTotalHoursAttribute()
+    {
+        return $this->rows->sum('total_hours');
+    }
+
 }

@@ -32,11 +32,15 @@
                                 class="border border-gray-300 rounded px-3 py-2 pr-10 w-64"
                                 style="background-color: #F3F3F3;">
                                 <option value="">-- Choose Year --</option>
-                                @foreach(range(date('Y')-5, date('Y')+1) as $y) 
-                                    <option value="{{ $y }}" {{ request('year')==$y ? 'selected' : '' }}>{{ $y }}</option>
+                                @php
+                                    $currentYear = now()->year;
+                                @endphp
+                                @foreach(range($currentYear - 5, $currentYear + 5) as $y) 
+                                    <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
                                 @endforeach
                             </select>
                         </div>
+
 
                         <!-- Month -->
                         <div>
@@ -147,32 +151,62 @@
 
                             <tbody>
                             @foreach($timesheets as $index => $timesheet)
-                                <tr class="hover:bg-blue-50" style="background-color: #F3F3F3;">
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">{{ $index + 1 }}</td>
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">
-                                     <a href="{{ route('timesheet.view', ['userId' => $timesheet->user->id]) }}"
-                                    class="text-blue-800 hover:underline">
-                                    {{ $timesheet->user->name }}
+
+                            @php
+                                $year = $timesheet->year ?? now()->year;
+                                $month = $timesheet->month ?? now()->month;
+                                $week = $timesheet->week ?? 1;
+
+                                // Ensure month is valid
+                                $month = min(max($month, 1), 12);
+
+                                // Default start and end of week
+                                $startOfWeek = $endOfWeek = null;
+
+                                if ($timesheet->rows->isNotEmpty()) {
+                                    // Calculate based on actual rows if available
+                                    $dates = $timesheet->rows->pluck('date')->map(fn($d) => \Carbon\Carbon::parse($d));
+                                    $startOfWeek = $dates->min();
+                                    $endOfWeek = $dates->max();
+                                } else {
+                                    // Fallback calculation
+                                    try {
+                                        $firstOfMonth = \Carbon\Carbon::create($year, $month, 1);
+                                        $startOfWeek = (clone $firstOfMonth)->addWeeks($week - 1)->startOfWeek(\Carbon\Carbon::MONDAY);
+                                        $endOfWeek = (clone $startOfWeek)->endOfWeek(\Carbon\Carbon::SUNDAY);
+                                    } catch (\Exception $e) {
+                                        $startOfWeek = $endOfWeek = null;
+                                    }
+                                }
+
+                                $totalHours = $timesheet->rows->sum('total_hours');
+                            @endphp
+
+                            <tr class="hover:bg-blue-50" style="background-color: #F3F3F3;">
+                                <td class="px-6 py-4 border border-gray-300 text-sm">{{ $index + 1 }}</td>
+                                <td class="px-6 py-4 border border-gray-300 text-sm">
+                                    <a href="{{ route('timesheet.view', ['userId' => $timesheet->user->id]) }}" class="text-blue-800 hover:underline">
+                                        {{ $timesheet->user->name }}
                                     </a>
-
-                                    </td>
-
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">
-                                        {{ request('week') ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">
-                                        {{ request('date_range') ?? \Carbon\Carbon::parse($timesheet->date)->format('d/m/Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">
-                                        <span class="px-2 inline-flex text-xs font-semibold rounded-full bg-blue-200 text-blue-800">
-                                            {{ ucfirst($timesheet->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 border border-gray-300 text-sm">{{ $timesheet->total_hours }}</td>
-                                </tr>
+                                </td>
+                                <td class="px-6 py-4 border border-gray-300 text-sm">Week {{ $week }}</td>
+                                <td class="px-6 py-4 border border-gray-300 text-sm">
+                                    @if($startOfWeek && $endOfWeek)
+                                        {{ $startOfWeek->format('d/m/Y') }} - {{ $endOfWeek->format('d/m/Y') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 border border-gray-300 text-sm">
+                                    <span class="px-2 inline-flex text-xs font-semibold rounded-full bg-blue-200 text-blue-800">
+                                        {{ ucfirst($timesheet->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 border border-gray-300 text-sm">{{ $totalHours }}</td>
+                            </tr>
                             @endforeach
-                        </tbody>
 
+                            </tbody>
                         </table>
                     </div>
 

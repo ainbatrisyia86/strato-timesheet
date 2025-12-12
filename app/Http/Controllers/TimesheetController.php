@@ -33,6 +33,10 @@ class TimesheetController extends Controller
 
         if ($request->has('rows')) {
             foreach ($request->rows as $row) {
+                $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
+                $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
+                $totalHours = $start && $end ? round($end->floatDiffInHours($start), 2) : null;
+
                 TimesheetRow::create([
                     'timesheet_id' => $timesheet->id,
                     'date'         => $row['date'] ?? null,
@@ -40,6 +44,7 @@ class TimesheetController extends Controller
                     'task'         => $row['task'] ?? null,
                     'start_time'   => $row['start'] ?? null,
                     'end_time'     => $row['end'] ?? null,
+                    'total_hours'  => $totalHours,
                 ]);
             }
         }
@@ -51,7 +56,7 @@ class TimesheetController extends Controller
     public function index()
     {
         $timesheets = Timesheet::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc') // Use created_at instead of date
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return view('timesheet.index', compact('timesheets'));
@@ -83,17 +88,22 @@ class TimesheetController extends Controller
             $timesheet->save();
         }
 
-        // Remove old rows and create new ones
+        // Delete old rows and recreate
         $timesheet->rows()->delete();
 
         if ($request->has('rows')) {
             foreach ($request->rows as $row) {
+                $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
+                $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
+                $totalHours = $start && $end ? round($end->floatDiffInHours($start), 2) : null;
+
                 $timesheet->rows()->create([
-                    'date'       => $row['date'] ?? null,
-                    'project'    => $row['project'] ?? null,
-                    'task'       => $row['task'] ?? null,
-                    'start_time' => $row['start'] ?? null,
-                    'end_time'   => $row['end'] ?? null,
+                    'date'        => $row['date'] ?? null,
+                    'project'     => $row['project'] ?? null,
+                    'task'        => $row['task'] ?? null,
+                    'start_time'  => $row['start'] ?? null,
+                    'end_time'    => $row['end'] ?? null,
+                    'total_hours' => $totalHours,
                 ]);
             }
         }
@@ -120,6 +130,10 @@ class TimesheetController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('year')) $query->where('year', $request->year);
+        if ($request->filled('month')) $query->where('month', $request->month);
+        if ($request->filled('week')) $query->where('week', $request->week);
+
         $timesheets = $query->orderBy('created_at', 'desc')->get();
 
         return view('hr.viewTS', compact('timesheets'));
@@ -132,16 +146,9 @@ class TimesheetController extends Controller
 
         $query = Timesheet::where('user_id', $user->id)->with('rows');
 
-        // Optional filtering by year, month, week
-        if ($request->filled('year')) {
-            $query->where('year', $request->year);
-        }
-        if ($request->filled('month')) {
-            $query->where('month', $request->month);
-        }
-        if ($request->filled('week')) {
-            $query->where('week', $request->week);
-        }
+        if ($request->filled('year')) $query->where('year', $request->year);
+        if ($request->filled('month')) $query->where('month', $request->month);
+        if ($request->filled('week')) $query->where('week', $request->week);
 
         $timesheets = $query->orderBy('week', 'asc')->get();
 
@@ -154,12 +161,17 @@ class TimesheetController extends Controller
         ]);
     }
 
-
     // HR: Show single timesheet details
     public function details(Request $request, $id)
     {
         $timesheet = Timesheet::with('user', 'rows')->findOrFail($id);
-        return view('hr.detailsTS', compact('timesheet'));
+
+        return view('hr.detailsTS', [
+            'timesheet'      => $timesheet,
+            'selectedYear'   => $request->year ?? null,
+            'selectedMonth'  => $request->month ?? null,
+            'selectedWeek'   => $request->week ?? null,
+        ]);
     }
 
     // HR: Optional generate report

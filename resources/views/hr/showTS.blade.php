@@ -101,7 +101,10 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 border border-gray-300 text-sm">
-                                            <a href="{{ route('timesheet.details', $ts->id) }}?week={{ $weekNumber }}&month={{ $tsDate->month }}&year={{ $tsDate->year }}&position={{ $ts->user->role }}" class="text-blue-500 hover:underline">View</a>
+                                            <a href="{{ route('hr.detailsTS', $ts->id) }}?week={{ $weekNumber }}&month={{ $tsDate->month }}&year={{ $tsDate->year }}&position={{ $ts->user->role }}" 
+                                            class="text-blue-500 hover:underline">
+                                                View
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach
