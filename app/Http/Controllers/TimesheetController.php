@@ -35,15 +35,20 @@ class TimesheetController extends Controller
             foreach ($request->rows as $row) {
                 $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
                 $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
-                $totalHours = $start && $end ? round($end->floatDiffInHours($start), 2) : null;
+
+                $totalHours = 0;
+            if ($start && $end) {
+                $minutes = $end->diffInMinutes($start); // always positive
+                $totalHours = round($minutes / 60, 2);
+            }
 
                 TimesheetRow::create([
                     'timesheet_id' => $timesheet->id,
                     'date'         => $row['date'] ?? null,
                     'project'      => $row['project'] ?? null,
                     'task'         => $row['task'] ?? null,
-                    'start_time'   => $row['start'] ?? null,
-                    'end_time'     => $row['end'] ?? null,
+                    'start_time'   => $row['start_time'] ?? null,
+                    'end_time'     => $row['end_time'] ?? null,
                     'total_hours'  => $totalHours,
                 ]);
             }
@@ -55,19 +60,26 @@ class TimesheetController extends Controller
     // List all timesheets of logged-in staff
     public function index()
     {
-        $timesheets = Timesheet::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $timesheets = Timesheet::orderBy('id', 'desc')->paginate(10);
+
+           // ->orderBy('created_at', 'desc')
+           // ->paginate(10);
+
 
         return view('timesheet.index', compact('timesheets'));
     }
 
     // Show single timesheet with its rows
     public function show($id)
-    {
-        $timesheet = Timesheet::with('rows')->findOrFail($id);
-        return view('timesheet.show', compact('timesheet'));
-    }
+{
+    $timesheet = Timesheet::with('rows')->findOrFail($id);
+
+    // Sum total_hours from all rows
+    $totalHours = $timesheet->rows->sum('total_hours');
+
+    return view('timesheet.show', compact('timesheet', 'totalHours'));
+}
+
 
     // Edit a timesheet
     public function edit($id)
@@ -95,14 +107,18 @@ class TimesheetController extends Controller
             foreach ($request->rows as $row) {
                 $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
                 $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
-                $totalHours = $start && $end ? round($end->floatDiffInHours($start), 2) : null;
-
+                
+                $totalHours = 0;
+                  if ($start && $end) {
+                      $minutes = $end->diffInMinutes($start); // always positive
+                      $totalHours = round($minutes / 60, 2);
+                 }
                 $timesheet->rows()->create([
                     'date'        => $row['date'] ?? null,
                     'project'     => $row['project'] ?? null,
                     'task'        => $row['task'] ?? null,
-                    'start_time'  => $row['start'] ?? null,
-                    'end_time'    => $row['end'] ?? null,
+                    'start_time'  => $row['start_time'] ?? null,
+                    'end_time'    => $row['end_time'] ?? null,
                     'total_hours' => $totalHours,
                 ]);
             }
