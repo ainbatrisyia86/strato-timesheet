@@ -45,14 +45,14 @@
 
                         <td class="px-4 py-3 flex justify-center items-center gap-2">
                             <!-- View Button -->
-                            <a href="{{ route('timesheet.show', $t->id) }}"
+                            <a href="{{ route('timesheet.show', Crypt::encrypt($t->id)) }}"
                                class="text-white px-3 py-1 rounded shadow inline-block"
                                style="background-color: rgba(39, 173, 227, 0.59);">
                                 View
                             </a>
 
                             <!-- Edit Button -->
-                            <a href="{{ route('timesheet.edit', $t->id) }}"
+                            <a href="{{ route('timesheet.edit', Crypt::encrypt($t->id)) }}"
                                class="text-white px-3 py-1 rounded shadow inline-block"
                                style="background-color: rgba(255, 157, 0, 0.59);">
                                 Edit
