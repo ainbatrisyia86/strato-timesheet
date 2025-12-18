@@ -8,9 +8,9 @@
         Edit Timesheet
     </h1>
 
-    <form action="{{ route('timesheet.update', $timesheet->id) }}" method="POST">
+    <form action="{{ route('timesheet.update', $timesheet->id) }}" method="PUT">
         @csrf
-        @method('PUT')
+        
 
         <!-- Top Filters -->
         <div class="flex items-center gap-4 mb-6 justify-center">

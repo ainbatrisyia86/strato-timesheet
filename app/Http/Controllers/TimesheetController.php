@@ -7,6 +7,8 @@ use App\Models\Timesheet;
 use App\Models\TimesheetRow;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class TimesheetController extends Controller
 {
@@ -23,6 +25,7 @@ class TimesheetController extends Controller
     // Store a new timesheet with rows
     public function store(Request $request)
     {
+        dd($request->all());
         $timesheet = Timesheet::create([
             'user_id' => auth()->id(),
             'week'    => $request->week,
@@ -47,8 +50,8 @@ class TimesheetController extends Controller
                     'date'         => $row['date'] ?? null,
                     'project'      => $row['project'] ?? null,
                     'task'         => $row['task'] ?? null,
-                    'start_time'   => $row['start_time'] ?? null,
-                    'end_time'     => $row['end_time'] ?? null,
+                    'start_time'   => $row['start'] ?? null,
+                    'end_time'     => $row['end'] ?? null,
                     'total_hours'  => $totalHours,
                 ]);
             }
@@ -60,37 +63,45 @@ class TimesheetController extends Controller
     // List all timesheets of logged-in staff
     public function index()
     {
-        $timesheets = Timesheet::orderBy('id', 'desc')->paginate(10);
-
-           // ->orderBy('created_at', 'desc')
-           // ->paginate(10);
-
-
+        $timesheets = Timesheet::where('user_id', auth()->id())->paginate(10);
         return view('timesheet.index', compact('timesheets'));
     }
 
     // Show single timesheet with its rows
     public function show($id)
-{
-    $timesheet = Timesheet::with('rows')->findOrFail($id);
+    {
+        try {
+            $decryptedId = Crypt::decrypt($id);
+        } catch (DecryptException $e) {
+            abort(404);
+        }
 
-    // Sum total_hours from all rows
-    $totalHours = $timesheet->rows->sum('total_hours');
+        $timesheet = Timesheet::with('rows')->findOrFail($decryptedId);
 
-    return view('timesheet.show', compact('timesheet', 'totalHours'));
-}
+        // Sum total_hours from all rows
+        $totalHours = $timesheet->rows->sum('total_hours');
 
+        return view('timesheet.show', compact('timesheet', 'totalHours'));
+    }
 
-    // Edit a timesheet
+   // Edit a timesheet
     public function edit($id)
     {
-        $timesheet = Timesheet::with('rows')->findOrFail($id);
+        try {
+            $decryptedId = Crypt::decrypt($id);
+        } catch (DecryptException $e) {
+            abort(404);
+        }
+
+        $timesheet = Timesheet::with('rows')->findOrFail($decryptedId);
+
         return view('timesheet.edit', compact('timesheet'));
     }
 
     // Update a timesheet and its rows
     public function update(Request $request, $id)
     {
+        // dd($request->all());
         $timesheet = Timesheet::findOrFail($id);
 
         $timesheet->update($request->only('week', 'month', 'year'));
@@ -117,8 +128,8 @@ class TimesheetController extends Controller
                     'date'        => $row['date'] ?? null,
                     'project'     => $row['project'] ?? null,
                     'task'        => $row['task'] ?? null,
-                    'start_time'  => $row['start_time'] ?? null,
-                    'end_time'    => $row['end_time'] ?? null,
+                    'start_time'  => $row['start'] ?? null,
+                    'end_time'    => $row['end'] ?? null,
                     'total_hours' => $totalHours,
                 ]);
             }
