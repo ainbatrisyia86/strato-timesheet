@@ -17,15 +17,22 @@ class Timesheet extends Model
         'week',
         'month',
         'year',
-        'date',        // optional, if tracking individual row dates
-        'project',     // optional, if storing summary info
-        'task',        // optional
-        'start_time',  // optional
-        'end_time',    // optional
-        'total_hours', // optional
+        'start_date',
+        'end_date',
+        // 'date',        // optional, if tracking individual row dates
+        // 'project',     // optional, if storing summary info
+        // 'task',        // optional
+        // 'start_time',  // optional
+        // 'end_time',    // optional
+        // 'total_hours', // optional
         'status',
-        'role',        // optional, e.g., user role
+        // 'role',        // optional, e.g., user role
     ];
+
+    protected $casts = [
+    'start_date' => 'date',
+    'end_date'   => 'date',
+];
 
     // ------------------------------
     // Timestamps

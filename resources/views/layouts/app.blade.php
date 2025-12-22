@@ -35,14 +35,13 @@
         @endisset
 
         {{-- Page Content --}}
-        <main class="pt-6 sm:pt-8 lg:pt-12">
-            @isset($slot)
+        <main class="pt-2 sm:pt-4 lg:pt-6">
+             @isset($slot)
                 {{ $slot }}
             @endisset
 
             @yield('content')
-        </main>
-
+        </main> 
     </div>
 
 </body>

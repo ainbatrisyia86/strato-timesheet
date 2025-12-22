@@ -22,49 +22,73 @@ class TimesheetController extends Controller
         return view('timesheet.create');
     }
 
-    // Store a new timesheet with rows
+    // Store a new timesheet manually (optional)
     public function store(Request $request)
     {
-        dd($request->all());
-        $timesheet = Timesheet::create([
-            'user_id' => auth()->id(),
-            'week'    => $request->week,
-            'month'   => $request->month,
-            'year'    => $request->year,
-            'status'  => $request->action === 'save' ? 'Saved' : 'Submitted',
-        ]);
+        $userId = auth()->id();
 
-        if ($request->has('rows')) {
-            foreach ($request->rows as $row) {
-                $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
-                $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
+        // Current week start (Monday) & end (Friday)
+        $startDate = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $endDate   = Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(4)->toDateString();
 
-                $totalHours = 0;
-            if ($start && $end) {
-                $minutes = $end->diffInMinutes($start); // always positive
-                $totalHours = round($minutes / 60, 2);
-            }
+        // Prevent duplicate timesheet for same week
+        $exists = Timesheet::where('user_id', $userId)
+            ->where('start_date', $startDate)
+            ->exists();
 
-                TimesheetRow::create([
-                    'timesheet_id' => $timesheet->id,
-                    'date'         => $row['date'] ?? null,
-                    'project'      => $row['project'] ?? null,
-                    'task'         => $row['task'] ?? null,
-                    'start_time'   => $row['start'] ?? null,
-                    'end_time'     => $row['end'] ?? null,
-                    'total_hours'  => $totalHours,
-                ]);
-            }
+        if ($exists) {
+            return redirect()->back()->with('error', 'Timesheet for this week already exists.');
         }
 
-        return redirect()->route('timesheet.index')->with('success', 'Timesheet saved successfully!');
+        // Create timesheet
+        Timesheet::create([
+            'user_id'    => $userId,
+            'week'       => Carbon::now()->weekOfYear,
+            'month'      => Carbon::now()->month,
+            'year'       => Carbon::now()->year,
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+            'status'     => 'open',
+        ]);
+
+        return redirect()->route('timesheet.index')
+            ->with('success', 'Weekly timesheet created.');
     }
 
-    // List all timesheets of logged-in staff
+    // List all timesheets of logged-in staff & auto-create current week if missing
     public function index()
     {
-        $timesheets = Timesheet::where('user_id', auth()->id())->paginate(10);
-        return view('timesheet.index', compact('timesheets'));
+        $userId = auth()->id();
+
+        // Current week start (Monday) & end (Friday)
+        $startDate = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $weekEnd   = Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(4)->toDateString();
+
+        // Auto-create timesheet for current week if not exists
+        $exists = Timesheet::where('user_id', $userId)
+            ->where('start_date', $startDate)
+            ->exists();
+
+        if (!$exists) {
+            Timesheet::create([
+                'user_id'    => $userId,
+                'week'       => Carbon::now()->weekOfYear,
+                'month'      => Carbon::now()->month,
+                'year'       => Carbon::now()->year,
+                'start_date' => $startDate,
+                'end_date'   => $weekEnd,
+                'status'     => 'open',
+            ]);
+        }
+
+        // Fetch all timesheets
+        $timesheets = Timesheet::where('user_id', $userId)
+            ->orderBy('start_date', 'desc')
+            ->paginate(10);
+
+        $currentWeekStart = $startDate;
+
+        return view('timesheet.index', compact('timesheets', 'currentWeekStart'));
     }
 
     // Show single timesheet with its rows
@@ -78,13 +102,12 @@ class TimesheetController extends Controller
 
         $timesheet = Timesheet::with('rows')->findOrFail($decryptedId);
 
-        // Sum total_hours from all rows
         $totalHours = $timesheet->rows->sum('total_hours');
 
         return view('timesheet.show', compact('timesheet', 'totalHours'));
     }
 
-   // Edit a timesheet
+    // Edit a timesheet
     public function edit($id)
     {
         try {
@@ -101,7 +124,6 @@ class TimesheetController extends Controller
     // Update a timesheet and its rows
     public function update(Request $request, $id)
     {
-        // dd($request->all());
         $timesheet = Timesheet::findOrFail($id);
 
         $timesheet->update($request->only('week', 'month', 'year'));
@@ -118,12 +140,13 @@ class TimesheetController extends Controller
             foreach ($request->rows as $row) {
                 $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
                 $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
-                
+
                 $totalHours = 0;
-                  if ($start && $end) {
-                      $minutes = $end->diffInMinutes($start); // always positive
-                      $totalHours = round($minutes / 60, 2);
-                 }
+                if ($start && $end) {
+                    $minutes = $end->diffInMinutes($start);
+                    $totalHours = round($minutes / 60, 2);
+                }
+
                 $timesheet->rows()->create([
                     'date'        => $row['date'] ?? null,
                     'project'     => $row['project'] ?? null,
@@ -142,21 +165,15 @@ class TimesheetController extends Controller
     // HR / ADMIN FUNCTIONS
     // ------------------------------
 
-    // HR: View all timesheets with optional filters
     public function viewTS(Request $request)
     {
         $query = Timesheet::with('user', 'rows');
 
         if ($request->filled('staff_name')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->staff_name . '%');
-            });
+            $query->whereHas('user', fn($q) => $q->where('name', 'like', '%' . $request->staff_name . '%'));
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
+        if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('year')) $query->where('year', $request->year);
         if ($request->filled('month')) $query->where('month', $request->month);
         if ($request->filled('week')) $query->where('week', $request->week);
@@ -166,11 +183,9 @@ class TimesheetController extends Controller
         return view('hr.viewTS', compact('timesheets'));
     }
 
-    // HR: Show timesheets of a specific staff
     public function showStaff(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
-
         $query = Timesheet::where('user_id', $user->id)->with('rows');
 
         if ($request->filled('year')) $query->where('year', $request->year);
@@ -188,7 +203,6 @@ class TimesheetController extends Controller
         ]);
     }
 
-    // HR: Show single timesheet details
     public function details(Request $request, $id)
     {
         $timesheet = Timesheet::with('user', 'rows')->findOrFail($id);
@@ -201,13 +215,11 @@ class TimesheetController extends Controller
         ]);
     }
 
-    // HR: Optional generate report
     public function generateReport()
     {
         return "Generate report function works!";
     }
 
-    // HR: index for all timesheets
     public function indexHr()
     {
         $timesheets = Timesheet::with('user', 'rows')->get();

@@ -18,38 +18,36 @@
             <!-- WEEK -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">WEEK:</label>
-                <input type="text" name="week" class="w-28 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
-                       value="{{ $timesheet->week }}" required />
+                <input type="text" name="week" value="{{ $timesheet->week }}"
+                    class="w-28 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
+                    readonly />
             </div>
 
             <!-- MONTH -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">MONTH:</label>
-                <select name="month" class="w-48 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2" required>
-                    <option value="">MONTH</option>
-                    @foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $m)
-                        <option value="{{ $m }}" {{ $timesheet->month == $m ? 'selected' : '' }}>{{ $m }}</option>
-                    @endforeach
-                </select>
+                <input type="text" name="month" 
+                value="{{ \Carbon\Carbon::create()->month((int) $timesheet->month)->format('F') }}" 
+                class="w-48 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
+                readonly />
+                <!-- Convert numeric month to full month name using Carbon -->
+
             </div>
 
             <!-- YEAR -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">YEAR:</label>
-                <select name="year" class="w-48 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2" required>
-                    <option value="">YEAR</option>
-                    @foreach([2023,2024,2025,2026] as $yr)
-                        <option value="{{ $yr }}" {{ $timesheet->year == $yr ? 'selected' : '' }}>{{ $yr }}</option>
-                    @endforeach
-                </select>
+                <input type="text" name="year" value="{{ $timesheet->year }}"
+                    class="w-48 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
+                    readonly />
             </div>
 
             <!-- POSITION -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">POSITION:</label>
-                <input type="text" name="position"
-                    value="{{ $timesheet->position }}"
-                    class="w-40 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2" required />
+                <input type="text" name="position" value="{{ $timesheet->position }}"
+                    class="w-40 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
+                    readonly />
             </div>
         </div>
 
@@ -151,7 +149,7 @@
             </button>
 
             <button type="submit" name="action" value="submit"
-                class="px-6 py-2 rounded-xl text-white font-semibold shadow rounded flex"
+                class="px-6 py-2 rounded flex text-white font-semibold shadow rounded flex"
                 style="background-color: rgba(36,210,65,0.71);">
                 SUBMIT
             </button>
@@ -167,16 +165,61 @@ function deleteRow(btn) {
     btn.closest("tr").remove();
 }
 
+const weekNumber = {{ $timesheet->week }};
+const year = {{ $timesheet->year }};
+
+// Function to get Monday to Friday dates of the ISO week
+function getWeekDates(weekNumber, year) {
+
+    // ISO week: week 1 = first week with Jan 4th (first week of year always contain 4jan)
+    const jan4 = new Date(year, 0, 4);
+
+    // Get Monday of the first ISO week
+    const dayOfWeek = jan4.getDay() || 7; // Sunday=7
+    const firstMonday = new Date(jan4);
+    firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+
+    // Monday of target week
+    const mondayOfWeek = new Date(firstMonday);
+    mondayOfWeek.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+
+    // Collect Monday → Friday dates
+    const weekDates = [];
+    for (let i = 0; i < 5; i++) {
+        const d = new Date(mondayOfWeek);
+        d.setDate(mondayOfWeek.getDate() + i);
+        weekDates.push(d.toISOString().split('T')[0]);
+    }
+
+    return weekDates;
+}
+
+
+
+const weekDates = getWeekDates(weekNumber, year);
+let weekDateIndex = 0;
+
+
 function addRow() {
+    if (weekDateIndex >= weekDates.length) {
+        alert("All week dates have been added!");
+        return;
+    }
+
     const tbody = document.getElementById("timesheet-body");
     const addRowEl = document.getElementById("add-row-wrapper");
+
+    const dateValue = weekDates[weekDateIndex]; // pick next date in week
+    weekDateIndex++;
 
     const row = document.createElement("tr");
     row.classList.add("border-b", "border-gray-300");
 
     row.innerHTML = `
         <td class="py-3 px-4">
-            <input type="date" name="rows[${rowIndex}][date]" class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+            <input type="date" name="rows[${rowIndex}][date]" 
+                   class="w-full bg-white border border-gray-300 rounded px-2 py-1" 
+                   value="${dateValue}" required>
         </td>
 
         <td class="py-3 px-4">
@@ -192,11 +235,11 @@ function addRow() {
         </td>
 
         <td class="py-3 px-4">
-            <input type="time" name="rows[${rowIndex}][start]" class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+            <input type="time" name="rows[${rowIndex}][start_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
         </td>
 
         <td class="py-3 px-4">
-            <input type="time" name="rows[${rowIndex}][end]" class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+            <input type="time" name="rows[${rowIndex}][end_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
         </td>
 
         <td class="py-3 px-4">
@@ -212,5 +255,6 @@ function addRow() {
     tbody.insertBefore(row, addRowEl);
     rowIndex++;
 }
+</script>
 </script>
 @endsection

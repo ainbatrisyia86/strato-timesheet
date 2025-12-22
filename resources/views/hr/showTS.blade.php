@@ -89,7 +89,9 @@
                                 @foreach($timesheets as $index => $ts)
                                     @php
                                         $tsDate = \Carbon\Carbon::parse($ts->date);
-                                        $weekNumber = ceil($tsDate->day / 7);
+                                        //$weekNumber = ceil($tsDate->day / 7);
+                                        $weekNumber = $tsDate->isoWeek();
+
                                     @endphp
                                     <tr class="hover:bg-blue-50">
                                         <td class="px-6 py-4 border border-gray-300 text-sm">{{ $index + 1 }}</td>
