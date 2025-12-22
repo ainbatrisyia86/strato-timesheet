@@ -27,6 +27,15 @@ class TimesheetController extends Controller
     {
         $userId = auth()->id();
 
+        dd($request->all()); //debug
+        $timesheet = Timesheet::create([
+            'user_id' => auth()->id(),
+            'week'    => $request->week,
+            'month'   => $request->month,
+            'year'    => $request->year,
+            'status'  => $request->action === 'save' ? 'Saved' : 'Submitted',
+        ]);
+
         // Current week start (Monday) & end (Friday)
         $startDate = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
         $endDate   = Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(4)->toDateString();

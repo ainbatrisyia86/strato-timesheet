@@ -183,13 +183,35 @@
           <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required autofocus>
         </div>
 
-        <div class="input">
+        <div class="input" style="position:relative;">
           <!-- lock icon -->
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="3" y="11" width="18" height="10" rx="2" stroke="#444" stroke-width="1.2"/>
             <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="#444" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <input type="password" name="password" placeholder="Password" required>
+
+          <input type="password" name="password" placeholder="Password" required style="padding-right:32px;" id="password-field">
+        
+          <!-- eye icon button -->
+          <span id="toggle-password" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); cursor:pointer; opacity:0.6;">
+            <!-- Eye icon (you can replace with any SVG) -->
+            
+            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5
+                  c4.478 0 8.268 2.943 9.542 7
+                  -1.274 4.057-5.064 7-9.542 7
+                  -4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+
+            <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20" style="display:none;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19 c-4.478 0-8.268-2.943-9.543-7 a9.97 9.97 0 012.188-3.264"/>
+            </svg>
+
+          </span>
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; margin-bottom:8px;">
@@ -205,5 +227,24 @@
     </div>
   </div>
 
+  <script>
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordField = document.getElementById('password-field');
+    const eyeOpen = document.getElementById('eye-open');
+    const eyeClosed = document.getElementById('eye-closed');
+
+    togglePassword.addEventListener('click', () => {
+      if(passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeOpen.style.display = 'none';
+        eyeClosed.style.display = 'block';
+      } else {
+        passwordField.type = 'password';
+        eyeOpen.style.display = 'block';
+        eyeClosed.style.display = 'none';
+      }
+    });
+  </script>
+  
 </body>
 </html>

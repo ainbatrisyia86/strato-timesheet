@@ -16,7 +16,8 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    // redirect any request to dashboard to /timesheets
+    return redirect()->route('timesheet.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 /*
