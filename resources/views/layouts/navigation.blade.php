@@ -6,23 +6,24 @@
             <div class="flex">
                 {{-- Logo --}}
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ route('timesheet.index') }}">
                         <img src="{{ asset('images/strato_logo.png') }}" class="h-9 w-auto" alt="Logo">
                     </a>
                 </div>
 
                 {{-- Desktop Navigation Links --}}
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
-                    {{-- Dashboard --}}
+                    <!-- {{-- Dashboard --}}
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
-                    </x-nav-link>
+                    </x-nav-link> -->
 
                     {{-- Timesheet --}}
                     @if(Auth::user()->role === 'hr')
                         <x-nav-link :href="route('hr.viewTS')" :active="request()->routeIs('hr.viewTS')">
                             {{ __('Timesheet') }}
                         </x-nav-link>
+
                     @elseif(Auth::user()->role === 'staff')
                         <x-nav-link :href="route('timesheet.index')" :active="request()->routeIs('timesheet.index')">
                             {{ __('Timesheet') }}
@@ -91,7 +92,7 @@
     {{-- Mobile Menu --}}
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-responsive-nav-link>
+            <!-- <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-responsive-nav-link> -->
 
             @if(Auth::user()->role === 'hr')
                 <x-responsive-nav-link :href="route('hr.viewTS')">Timesheet</x-responsive-nav-link>

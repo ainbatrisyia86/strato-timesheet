@@ -25,7 +25,7 @@ class TimesheetController extends Controller
     // Store a new timesheet with rows
     public function store(Request $request)
     {
-        dd($request->all());
+        dd($request->all()); //debug
         $timesheet = Timesheet::create([
             'user_id' => auth()->id(),
             'week'    => $request->week,

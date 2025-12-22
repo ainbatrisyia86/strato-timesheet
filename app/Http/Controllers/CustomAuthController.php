@@ -23,7 +23,8 @@ class CustomAuthController extends Controller
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended('/record-timesheet');
+
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors(['email' => 'These credentials do not match our records.'])->withInput();
