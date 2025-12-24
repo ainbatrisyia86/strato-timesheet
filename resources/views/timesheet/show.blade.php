@@ -35,7 +35,8 @@
         <!-- Position -->
          <div class="flex items-center gap-2">
         <label class="font-semibold mb-1 text-sm">POSITION:</label>
-        <input type="text" value="{{ $timesheet->position }}"
+        <input type="text" value="{{ $timesheet->user->position ?? '-' }}"
+
             class="w-40 border border-gray-300 rounded flex px-3 py-2"  style="background-color: #F3F4F6;" readonly />
     </div>
 </div>

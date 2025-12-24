@@ -64,7 +64,7 @@ class TimesheetController extends Controller
             ->with('success', 'Weekly timesheet created.');
     }
 
-    // List all timesheets of logged-in staff & auto-create current week if missing
+    // List all timesheets of logged-in staff 
     public function index()
     {
         $userId = auth()->id();
@@ -109,12 +109,23 @@ class TimesheetController extends Controller
             abort(404);
         }
 
-        $timesheet = Timesheet::with('rows')->findOrFail($decryptedId);
+        $timesheet = Timesheet::with(['rows', 'user'])->findOrFail($decryptedId);
 
-        $totalHours = $timesheet->rows->sum('total_hours');
+        $totalMinutes = 0;
 
-        return view('timesheet.show', compact('timesheet', 'totalHours'));
+    foreach ($timesheet->rows as $row) {
+        if ($row->start_time && $row->end_time) {
+            $start = Carbon::createFromFormat('H:i:s', $row->start_time);
+            $end   = Carbon::createFromFormat('H:i:s', $row->end_time);
+
+            $totalMinutes += $start->diffInMinutes($end);
+        }
     }
+
+    $totalHours = round($totalMinutes / 60, 2); // e.g. 7.50
+
+    return view('timesheet.show', compact('timesheet', 'totalHours'));
+}
 
     // Edit a timesheet
     public function edit($id)
@@ -125,50 +136,52 @@ class TimesheetController extends Controller
             abort(404);
         }
 
-        $timesheet = Timesheet::with('rows')->findOrFail($decryptedId);
+        $timesheet = Timesheet::with('user','rows')->findOrFail($decryptedId);
 
         return view('timesheet.edit', compact('timesheet'));
     }
 
     // Update a timesheet and its rows
-    public function update(Request $request, $id)
-    {
-        $timesheet = Timesheet::findOrFail($id);
+   public function update(Request $request, $id)
+{
+    $timesheet = Timesheet::findOrFail($id);
 
-        $timesheet->update($request->only('week', 'month', 'year'));
+    $timesheet->update($request->only('week', 'month', 'year'));
 
-        if ($request->action === 'submit') {
-            $timesheet->status = 'Submitted';
-            $timesheet->save();
-        }
-
-        // Delete old rows and recreate
-        $timesheet->rows()->delete();
-
-        if ($request->has('rows')) {
-            foreach ($request->rows as $row) {
-                $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
-                $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
-
-                $totalHours = 0;
-                if ($start && $end) {
-                    $minutes = $end->diffInMinutes($start);
-                    $totalHours = round($minutes / 60, 2);
-                }
-
-                $timesheet->rows()->create([
-                    'date'        => $row['date'] ?? null,
-                    'project'     => $row['project'] ?? null,
-                    'task'        => $row['task'] ?? null,
-                    'start_time'  => $row['start'] ?? null,
-                    'end_time'    => $row['end'] ?? null,
-                    'total_hours' => $totalHours,
-                ]);
-            }
-        }
-
-        return redirect()->route('timesheet.index')->with('success', 'Timesheet updated successfully!');
+    if ($request->action === 'submit') {
+        $timesheet->status = 'Submitted';
+        $timesheet->save();
     }
+
+    // Delete old rows
+    $timesheet->rows()->delete();
+
+    if ($request->has('rows')) {
+        foreach ($request->rows as $row) {
+            $start = isset($row['start']) ? Carbon::parse($row['start']) : null;
+            $end   = isset($row['end']) ? Carbon::parse($row['end']) : null;
+
+            $totalHours = 0;
+            if ($start && $end) {
+                $minutes = $end->diffInMinutes($start);
+                $totalHours = round($minutes / 60, 2);
+            }
+
+            
+
+            $timesheet->rows()->create([
+                'date'        => $row['date'] ?? null,
+                'project'     => $row['project'] ?? null,
+                'task'        => $row['task'] ?? null,
+                'start_time'  => $row['start_time'] ?? null, 
+                'end_time'    => $row['end_time'] ?? null,   
+                'total_hours' => $totalHours,
+            ]);
+        }
+    }
+
+    return redirect()->route('timesheet.index')->with('success', 'Timesheet updated successfully!');
+}
 
     // ------------------------------
     // HR / ADMIN FUNCTIONS

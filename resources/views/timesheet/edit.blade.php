@@ -8,9 +8,10 @@
         Edit Timesheet
     </h1>
 
-    <form action="{{ route('timesheet.update', $timesheet->id) }}" method="PUT">
-        @csrf
-        
+    <form method="POST" action="{{ route('timesheet.update', $timesheet->id) }}">
+    @csrf
+    @method('PUT')
+
 
         <!-- Top Filters -->
         <div class="flex items-center gap-4 mb-6 justify-center">
@@ -45,7 +46,9 @@
             <!-- POSITION -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">POSITION:</label>
-                <input type="text" name="position" value="{{ $timesheet->position }}"
+                <input type="text" name="position"value="{{ $timesheet->user->position ?? '-' }}
+"
+
                     class="w-40 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
                     readonly />
             </div>
@@ -74,7 +77,10 @@
                         <td class="py-3 px-4">
                             <input type="date" name="rows[{{ $index }}][date]"
                                    class="w-full bg-white border border-gray-300 rounded px-2 py-1"
-                                   value="{{ $row->date }}" required>
+                                   value="{{ $row->date }}"  
+                                    min="{{ $timesheet->start_date->format('Y-m-d') }}" 
+                                    max="{{ $timesheet->end_date->format('Y-m-d') }}" 
+                                   required>
                         </td>
 
                         <td class="py-3 px-4">
@@ -160,57 +166,47 @@
 <!-- JS for Add/Delete Rows -->
 <script>
 let rowIndex = {{ count($timesheet->rows) }};
+const startDate = '{{ $timesheet->start_date->format("Y-m-d") }}';
+const endDate   = '{{ $timesheet->end_date->format("Y-m-d") }}';
+
+// Generate all weekdays between startDate and endDate
+const weekDates = [];
+for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) { // Monday-Friday only
+        weekDates.push(new Date(d).toISOString().split('T')[0]);
+    }
+}
+
+// Track available dates
+let availableDates = [...weekDates];
+
+// Remove dates already in the table on page load
+document.querySelectorAll('#timesheet-body input[type="date"]').forEach(input => {
+    const idx = availableDates.indexOf(input.value);
+    if (idx !== -1) availableDates.splice(idx, 1);
+});
 
 function deleteRow(btn) {
-    btn.closest("tr").remove();
-}
-
-const weekNumber = {{ $timesheet->week }};
-const year = {{ $timesheet->year }};
-
-// Function to get Monday to Friday dates of the ISO week
-function getWeekDates(weekNumber, year) {
-
-    // ISO week: week 1 = first week with Jan 4th (first week of year always contain 4jan)
-    const jan4 = new Date(year, 0, 4);
-
-    // Get Monday of the first ISO week
-    const dayOfWeek = jan4.getDay() || 7; // Sunday=7
-    const firstMonday = new Date(jan4);
-    firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
-
-    // Monday of target week
-    const mondayOfWeek = new Date(firstMonday);
-    mondayOfWeek.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
-
-    // Collect Monday → Friday dates
-    const weekDates = [];
-    for (let i = 0; i < 5; i++) {
-        const d = new Date(mondayOfWeek);
-        d.setDate(mondayOfWeek.getDate() + i);
-        weekDates.push(d.toISOString().split('T')[0]);
+    const row = btn.closest("tr");
+    const dateInput = row.querySelector('input[type="date"]');
+    if (dateInput) {
+        availableDates.push(dateInput.value);
+        availableDates.sort(); // keep in chronological order
     }
-
-    return weekDates;
+    row.remove();
 }
-
-
-
-const weekDates = getWeekDates(weekNumber, year);
-let weekDateIndex = 0;
-
 
 function addRow() {
-    if (weekDateIndex >= weekDates.length) {
+    if (availableDates.length === 0) {
         alert("All week dates have been added!");
         return;
     }
 
+    const dateValue = availableDates.shift(); // get first available date
+
     const tbody = document.getElementById("timesheet-body");
     const addRowEl = document.getElementById("add-row-wrapper");
-
-    const dateValue = weekDates[weekDateIndex]; // pick next date in week
-    weekDateIndex++;
 
     const row = document.createElement("tr");
     row.classList.add("border-b", "border-gray-300");
@@ -219,7 +215,10 @@ function addRow() {
         <td class="py-3 px-4">
             <input type="date" name="rows[${rowIndex}][date]" 
                    class="w-full bg-white border border-gray-300 rounded px-2 py-1" 
-                   value="${dateValue}" required>
+                   value="${dateValue}" 
+                   min="${startDate}" 
+                   max="${endDate}" 
+                   required>
         </td>
 
         <td class="py-3 px-4">
@@ -252,9 +251,28 @@ function addRow() {
         </td>
     `;
 
-    tbody.insertBefore(row, addRowEl);
+    // Find correct position to insert based on date
+    let inserted = false;
+    const rows = tbody.querySelectorAll('tr');
+    for (let r of rows) {
+        const input = r.querySelector('input[type="date"]');
+        if (input && input.value > dateValue) {
+            tbody.insertBefore(row, r);
+            inserted = true;
+            break;
+        }
+    }
+
+    // If no row found after which to insert, place before "add-row-wrapper"
+    if (!inserted) {
+        tbody.insertBefore(row, addRowEl);
+    }
+
     rowIndex++;
 }
 </script>
+
+
+
 </script>
 @endsection

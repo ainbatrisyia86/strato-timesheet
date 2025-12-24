@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/timesheets/{id}', [TimesheetController::class, 'show'])->name('timesheet.show');
         Route::get('/timesheets/{id}/edit', [TimesheetController::class, 'edit'])->name('timesheet.edit');
         Route::put('/timesheets/{id}', [TimesheetController::class, 'update'])->name('timesheet.update');
+
     });
 
     // ------------------- HR Routes -------------------
