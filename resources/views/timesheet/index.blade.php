@@ -12,11 +12,11 @@
         </h1>
 
         <!-- Add Button -->
-        <a href="{{ route('timesheet.create') }}"
+        <!-- <a href="{{ route('timesheet.create') }}"
            class="text-white font-bold px-4 py-2 rounded flex items-center gap-2 shadow"
            style="background-color: #7BCAEA;">
             + ADD
-        </a>
+        </a> -->
     </div>
 
     <!-- Table -->
