@@ -172,6 +172,15 @@
         <div class="error">{{ $errors->first() }}</div>
       @endif
 
+      @if(session('success'))
+          <script>
+              alert("{{ session('success') }}");
+              // Optionally, redirect after OK
+              // window.location.href = "{{ route('login') }}"; 
+          </script>
+      @endif
+
+
       <form method="POST" action="{{ url('/login') }}">
         @csrf
 
@@ -222,6 +231,15 @@
         </div>
 
         <button type="submit" class="btn">Log In</button>
+
+        @if (Route::has('register'))
+          <div class="helper">
+            Don’t have an account?
+            <a href="{{ route('register') }}" style="color:#0D3B66; text-decoration:none; font-weight:600;">
+              Register
+            </a>
+          </div>
+        @endif
 
       </form>
     </div>

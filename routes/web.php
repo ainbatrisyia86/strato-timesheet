@@ -25,6 +25,9 @@ Route::get('/dashboard', function () {
 | AUTHENTICATION ROUTES
 |--------------------------------------------------------------------------
 */
+Route::get('/register', [CustomAuthController::class, 'register'])->name('register');
+Route::post('/register', [CustomAuthController::class, 'storeUser']);
+
 Route::get('/login', [CustomAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [CustomAuthController::class, 'login']);
 Route::post('/logout', [CustomAuthController::class, 'logout'])->name('logout');

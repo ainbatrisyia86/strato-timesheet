@@ -20,14 +20,36 @@
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" x-bind:readonly="!editing" />
+            <x-text-input 
+            id="name" 
+            name="name" 
+            type="text" 
+            class="mt-1 block w-full" 
+            :value="old('name', $user->name)" 
+            required 
+            autofocus autocomplete="name" 
+            x-bind:readonly="!editing"
+            x-bind:class="editing 
+            ? 'bg-[#F3F3F3]' 
+            : 'bg-gray-100 cursor-not-allowed'"/>
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
         <!-- Email -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" x-bind:readonly="!editing" />
+            <x-text-input 
+            id="email" 
+            name="email" 
+            type="email" 
+            class="mt-1 block w-full" 
+            :value="old('email', $user->email)" 
+            required 
+            autocomplete="username" 
+            x-bind:readonly="!editing" 
+            x-bind:class="editing 
+                ? 'bg-[#F3F3F3]' 
+                : 'bg-gray-100 cursor-not-allowed'" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
@@ -52,14 +74,34 @@
         <!-- Position -->
         <div>
             <x-input-label for="position" :value="__('Position')" />
-            <x-text-input id="position" name="position" type="text" class="mt-1 block w-full" :value="old('position', $user->position)" autocomplete="position" x-bind:readonly="!editing" />
+            <x-text-input 
+            id="position" 
+            name="position" 
+            type="text" 
+            class="mt-1 block w-full" 
+            :value="old('position', $user->position)" 
+            autocomplete="position" 
+            x-bind:readonly="!editing"
+            x-bind:class="editing 
+            ? 'bg-[#F3F3F3]' 
+            : 'bg-gray-100 cursor-not-allowed'" />
             <x-input-error class="mt-2" :messages="$errors->get('position')" />
         </div>
 
         <!-- Department -->
         <div class="mt-4">
             <x-input-label for="department" :value="__('Department')" />
-            <x-text-input id="department" name="department" type="text" class="mt-1 block w-full" :value="old('department', $user->department)" autocomplete="department" x-bind:readonly="!editing" />
+            <x-text-input 
+            id="department" 
+            name="department" 
+            type="text" 
+            class="mt-1 block w-full" 
+            :value="old('department', $user->department)" 
+            autocomplete="department" 
+            x-bind:readonly="!editing" 
+            x-bind:class="editing 
+            ? 'bg-[#F3F3F3]' 
+            : 'bg-gray-100 cursor-not-allowed'" />
             <x-input-error class="mt-2" :messages="$errors->get('department')" />
         </div>
 
@@ -70,7 +112,6 @@
                 type="button"
                 x-show="!editing"
                 @click="editing = true"
-                class="px-4 py-2 bg-gray-300 text-black rounded-md"
             >
                 Edit
             </x-secondary-button>
@@ -78,7 +119,6 @@
             <!-- Save button -->
             <x-primary-button
                 x-show="editing"
-                @click="editing = false"
             >
                 Save
             </x-primary-button>
