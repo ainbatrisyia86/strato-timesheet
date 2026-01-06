@@ -122,16 +122,14 @@
             >
                 Save
             </x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
         </div>
     </form>
+    
+    @if (session('status') === 'profile-updated')
+        <script>
+            alert('Your profile has been updated!');
+            window.location.href = '{{ route("profile.edit") }}'; // redirect to profile page
+        </script>
+    @endif
+
 </section>

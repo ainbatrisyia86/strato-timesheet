@@ -6,6 +6,6 @@
     bg-[#F3F3F3] text-black 
     focus:border-gray-600 
     focus:ring-gray-600 rounded-md 
-    shadow-sm'
+     rounded-md shadow-sm pr-10'
 ]) }}>
 

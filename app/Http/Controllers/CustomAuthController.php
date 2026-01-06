@@ -35,6 +35,11 @@ class CustomAuthController extends Controller
 
     public function showLoginForm()
     {
+       // If user is already logged in (via session or remember cookie)
+        if (Auth::check()) {
+            return redirect('/timesheets');
+        }
+
         return view('auth.custom-login');
     }
 
@@ -50,7 +55,8 @@ class CustomAuthController extends Controller
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->route('dashboard');
+            return redirect()->route('timesheet.index');
+
         }
 
         return back()->withErrors(['email' => 'These credentials do not match our records.'])->withInput();

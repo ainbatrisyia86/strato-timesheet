@@ -12,8 +12,8 @@ use App\Http\Controllers\SettingsController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return view('auth.login');
-});
+    return redirect()->route('timesheet.index');
+})->middleware('auth');
 
 Route::get('/dashboard', function () {
     // redirect any request to dashboard to /timesheets
