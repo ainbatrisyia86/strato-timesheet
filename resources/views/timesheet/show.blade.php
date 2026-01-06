@@ -14,7 +14,7 @@
         <!-- Week -->
         <div class="flex items-center gap-2">
         <label class="font-semibold mb-1 text-sm">WEEK:</label>
-        <input type="text" value="Week {{ $timesheet->week }}"
+        <input type="text" value="{{ $timesheet->week }}"
             class="w-28 border border-gray-300 rounded flex px-3 py-2"  style="background-color: #F3F4F6;" readonly />
         </div>
 
@@ -87,11 +87,14 @@
                 @endforeach
 
                 <!-- TOTAL HOURS -->
-                <tr style="height: 45px;">
-                    <td colspan="6" class="py-4 px-4 text-right font-medium">
-                        Total Hours: {{ $totalHours ?? 'N/A' }}
-                    </td>
-                </tr>
+                <tr>
+    <td colspan="4" class="px-4 py-4 text-right font-semibold">
+        Total Hours (Week):
+    </td>
+    <td class="px-4 py-4 font-semibold">
+        {{ number_format($weeklyTotal, 2) }}
+    </td>
+</tr>
 
             </tbody>
         </table>

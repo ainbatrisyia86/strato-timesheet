@@ -28,11 +28,9 @@
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">MONTH:</label>
                 <input type="text" name="month" 
-                value="{{ \Carbon\Carbon::create()->month((int) $timesheet->month)->format('F') }}" 
+                value="{{ \Carbon\Carbon::parse($timesheet->start_date)->format('F') }}" 
                 class="w-48 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
-                readonly />
-                <!-- Convert numeric month to full month name using Carbon -->
-
+            readonly />
             </div>
 
             <!-- YEAR -->
@@ -46,9 +44,7 @@
             <!-- POSITION -->
             <div class="flex items-center gap-2">
                 <label class="font-semibold mb-1 text-sm">POSITION:</label>
-                <input type="text" name="position"value="{{ $timesheet->user->position ?? '-' }}
-"
-
+                <input type="text" name="position"value="{{ $timesheet->user->position ?? '-' }}"
                     class="w-40 bg-gray-100 border border-gray-300 rounded-xl px-3 py-2"
                     readonly />
             </div>
@@ -59,77 +55,87 @@
             <table class="w-full border-collapse border border-white">
 
                 <thead>
-                    <tr style="background-color: #818181;" class="text-white text-sm" height="45">
-                        <th class="px-4 text-left" style="border: 2px solid white; width: 15%;">DATE</th>
-                        <th class="py-3 px-4" style="border: 2px solid white; width: 30%;">PROJECT</th>
-                        <th class="py-3 px-4" style="border: 2px solid white; width: 30%;">TASK</th>
-                        <th class="py-3 px-4" style="border: 2px solid white; width: 12.5%;">START</th>
-                        <th class="py-3 px-4" style="border: 2px solid white; width: 12.5%;">END</th>
-                        <th class="py-3 px-4" style="border: 2px solid white; width: 10%;">ACTION</th>
+                    <tr style="background-color: #818181;" class="text-white text-sm">
+                        <th class="px-4 py-4 text-left" style="border: 2px solid white; width: 15%;">DATE</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">PROJECT</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">TASK</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">START</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">END</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 10%;">ACTION</th>
                     </tr>
                 </thead>
 
                 <tbody id="timesheet-body" style="background-color: #F3F3F3;">
 
-                    <!-- EXISTING ROWS -->
-                    @foreach($timesheet->rows as $index => $row)
-                    <tr class="border-b border-gray-300">
-                        <td class="py-3 px-4">
-                            <input type="date" name="rows[{{ $index }}][date]"
-                                   class="w-full bg-white border border-gray-300 rounded px-2 py-1"
-                                   value="{{ $row->date }}"  
-                                    min="{{ $timesheet->start_date->format('Y-m-d') }}" 
-                                    max="{{ $timesheet->end_date->format('Y-m-d') }}" 
-                                   required>
-                        </td>
+                    @php
+                        $groupedRows = $timesheet->rows->groupBy('date');
+                        $rowIndex = 0;
+                    @endphp
 
-                        <td class="py-3 px-4">
-                            <select name="rows[{{ $index }}][project]"
-                                    class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
-                                <option value="">Select Project</option>
-                                @foreach(['Project A','Project B','Project C'] as $p)
-                                    <option value="{{ $p }}" {{ $row->project == $p ? 'selected' : '' }}>
-                                        {{ $p }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </td>
+                    @foreach($groupedRows as $date => $rows)
+                        @foreach($rows as $i => $row)
+                            <tr class="border-b border-gray-300" data-date="{{ $date }}">
 
-                        <td class="py-3 px-4">
-                            <input type="text" name="rows[{{ $index }}][task]"
-                                   class="w-full bg-white border border-gray-300 rounded px-2 py-1"
-                                   value="{{ $row->task }}" required>
-                        </td>
+                                {{-- DATE --}}
+                                @if($i === 0)
+                                    <td class="px-4 py-4 align-top text-center date-cell"
+                                        rowspan="{{ count($rows) }}" data-date="{{ $date }}">
+                                        <input type="date" name="rows[{{ $rowIndex }}][date]" value="{{ $date }}" 
+                                               min="{{ $timesheet->start_date->format('Y-m-d') }}" 
+                                               max="{{ $timesheet->end_date->format('Y-m-d') }}" 
+                                               class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
+                                    </td>
+                                @endif
 
-                        <td class="py-3 px-4">
-                            <input type="time" name="rows[{{ $index }}][start_time]"
-                                   class="w-full bg-white border border-gray-300 rounded px-2 py-1"
-                                   value="{{ $row->start_time }}" required>
-                        </td>
+                                {{-- PROJECT --}}
+                                <td class="px-4 py-4">
+                                    <select name="rows[{{ $rowIndex }}][project]"
+                                            class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
+                                        <option value="">Select Project</option>
+                                        @foreach(['Project A','Project B','Project C'] as $p)
+                                            <option value="{{ $p }}" {{ $row->project == $p ? 'selected' : '' }}>{{ $p }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
 
-                        <td class="py-3 px-4">
-                            <input type="time" name="rows[{{ $index }}][end_time]"
-                                   class="w-full bg-white border border-gray-300 rounded px-2 py-1"
-                                   value="{{ $row->end_time }}" required>
-                        </td>
+                                {{-- TASK --}}
+                                <td class="px-4 py-4">
+                                    <textarea name="rows[{{ $rowIndex }}][task]" rows="2" style="resize: none;"
+                                              class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>{{ $row->task }}</textarea>
+                                </td>
 
-                        <td class="py-3 px-4">
-                            <button type="button" onclick="deleteRow(this)"
-                                style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FF3B30" viewBox="0 0 24 24">
-                                    <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
+                                {{-- START TIME --}}
+                                <td class="px-4 py-4">
+                                    <input type="time" name="rows[{{ $rowIndex }}][start_time]"
+                                           class="w-full bg-white border border-gray-300 rounded px-2 py-2"
+                                           value="{{ $row->start_time }}" required>
+                                </td>
+
+                                {{-- END TIME --}}
+                                <td class="px-4 py-4">
+                                    <input type="time" name="rows[{{ $rowIndex }}][end_time]"
+                                           class="w-full bg-white border border-gray-300 rounded px-2 py-2"
+                                           value="{{ $row->end_time }}" required>
+                                </td>
+
+                                {{-- DELETE BUTTON --}}
+                                <td class="px-4 py-4 text-center">
+                                <button type="button" onclick="deleteRow(this)" style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FF3B30" viewBox="0 0 24 24">
+                                        <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
+                                    </svg>
+                                </button>
+                            </td>
+
+                            </tr>
+                            @php $rowIndex++; @endphp
+                        @endforeach
                     @endforeach
 
                     <!-- ADD ROW BUTTON -->
-                    <tr id="add-row-wrapper" class="border-b border-gray-300" style="height: 45px;">
-                        <td class="py-3 px-4">
-                            <button type="button" onclick="addRow()"
-                                class="px-4 py-1 rounded text-sm text-white flex items-center gap-2"
-                                style="background-color: #7BCAEA;">
+                    <tr id="add-row-wrapper" class="border-b border-gray-300">
+                        <td class="px-4 py-4">
+                            <button type="button" onclick="addRow()" class="px-4 py-2 rounded text-sm text-white flex items-center gap-2" style="background-color: #7BCAEA;">
                                 <span class="text-lg">+</span> ADD
                             </button>
                         </td>
@@ -137,25 +143,29 @@
                     </tr>
 
                     <!-- TOTAL HOURS -->
-                    <tr style="height: 45px;">
-                        <td colspan="6" class="py-4 px-4 text-right font-medium">
-                            Total Hours
+                    <tr>
+                        <td colspan="5" class="px-4 py-4 text-right font-semibold">
+                            Total Hours (Week):
+                        </td>
+                        <td class="px-4 py-4 font-semibold">
+                            {{ number_format($weeklyTotal, 2) }}
                         </td>
                     </tr>
+
 
                 </tbody>
             </table>
         </div>
 
         <!-- Buttons -->
-        <div class="flex space-x-4 justify-center" style="margin-top: 40px;">
+        <div class="flex space-x-4 justify-center mt-10">
             <button type="submit" class="px-6 py-2 rounded flex text-white font-semibold shadow"
                 style="background-color:rgba(39,173,227,0.73)">
                 UPDATE
             </button>
 
             <button type="submit" name="action" value="submit"
-                class="px-6 py-2 rounded flex text-white font-semibold shadow rounded flex"
+                class="px-6 py-2 rounded flex text-white font-semibold shadow"
                 style="background-color: rgba(36,210,65,0.71);">
                 SUBMIT
             </button>
@@ -163,53 +173,35 @@
     </form>
 </div>
 
-<!-- JS for Add/Delete Rows -->
 <script>
 let rowIndex = {{ count($timesheet->rows) }};
 const startDate = '{{ $timesheet->start_date->format("Y-m-d") }}';
 const endDate   = '{{ $timesheet->end_date->format("Y-m-d") }}';
 
-/* ---------------------------------------
-   Existing dates already saved in DB
---------------------------------------- */
-const existingDates = @json(
-    $timesheet->rows->pluck('date')->unique()->values()
-);
+/* Existing dates already saved in DB */
+const existingDates = @json($timesheet->rows->pluck('date')->unique()->values());
 
-/* ---------------------------------------
-   Generate weekdays (Mon–Fri)
---------------------------------------- */
+/* Generate weekdays (Mon–Fri) */
 const weekDates = [];
 for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
     const day = d.getDay();
-    if (day !== 0 && day !== 6) {
-        weekDates.push(new Date(d).toISOString().split('T')[0]);
-    }
+    if (day !== 0 && day !== 6) weekDates.push(new Date(d).toISOString().split('T')[0]);
 }
 
-/* ---------------------------------------
-   Available dates = weekdays minus existing
---------------------------------------- */
-let availableDates = weekDates.filter(
-    date => !existingDates.includes(date)
-);
+/* Available dates = weekdays minus existing */
+let availableDates = weekDates.filter(date => !existingDates.includes(date));
 
-/* ---------------------------------------
-   + Add Row → new day
---------------------------------------- */
+/* + Add Row → new day */
 function addRow() {
     if (availableDates.length === 0) {
         alert("All week dates have been added!");
         return;
     }
-
     const dateValue = availableDates.shift();
     addFirstTaskRow(dateValue);
 }
 
-/* ---------------------------------------
-   First task row (date shown once)
---------------------------------------- */
+/* First task row (date shown once) */
 function addFirstTaskRow(dateValue) {
     const tbody = document.getElementById("timesheet-body");
     const addRowEl = document.getElementById("add-row-wrapper");
@@ -218,23 +210,10 @@ function addFirstTaskRow(dateValue) {
     row.dataset.date = dateValue;
 
     row.innerHTML = `
-        <td class="py-3 px-4 align-top text-center date-cell" rowspan="1" data-date="${dateValue}">
+        <td class="px-4 py-4 align-top text-center date-cell" rowspan="1" data-date="${dateValue}">
             <div class="font-medium">${dateValue}</div>
-            <button type="button"
-                    onclick="addMoreTask('${dateValue}')"
-                    style="
-                        background-color: rgba(255, 157, 0, 0.59);
-                        color:white;
-                        padding:4px 10px;
-                        border-radius:4px;
-                        font-size:12px;
-                        margin-top:6px;
-                        width:100%;
-                    ">
-                + Add more task
-            </button>
+            <button type="button" onclick="addMoreTask('${dateValue}')" style="background-color: rgba(255, 157, 0, 0.59); color:white; padding:4px 10px; border-radius:4px; font-size:12px; margin-top:6px; width:100%;">+ Add more task</button>
         </td>
-
         ${taskCells(dateValue)}
     `;
 
@@ -242,9 +221,7 @@ function addFirstTaskRow(dateValue) {
     rowIndex++;
 }
 
-/* ---------------------------------------
-   + Add more task (same day)
---------------------------------------- */
+/* + Add more task (same day) */
 function addMoreTask(dateValue) {
     const dateCell = document.querySelector(`td.date-cell[data-date="${dateValue}"]`);
     const currentRowspan = parseInt(dateCell.getAttribute("rowspan"));
@@ -254,20 +231,19 @@ function addMoreTask(dateValue) {
     row.dataset.date = dateValue;
     row.innerHTML = taskCells(dateValue);
 
-    dateCell.closest("tr").after(row);
+    const allRows = document.querySelectorAll(`tr[data-date="${dateValue}"]`);
+    const lastRow = allRows[allRows.length - 1];
+    lastRow.after(row);
+
     rowIndex++;
 }
 
-/* ---------------------------------------
-   Task cells
---------------------------------------- */
+/* Task cells HTML */
 function taskCells(dateValue) {
     return `
-        <td class="py-3 px-4">
+        <td class="px-4 py-4">
             <input type="hidden" name="rows[${rowIndex}][date]" value="${dateValue}">
-
-            <select name="rows[${rowIndex}][project]"
-                    class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+            <select name="rows[${rowIndex}][project]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
                 <option value="">Select Project</option>
                 <option>Project A</option>
                 <option>Project B</option>
@@ -275,36 +251,30 @@ function taskCells(dateValue) {
             </select>
         </td>
 
-        <td class="py-3 px-4">
-            <input type="text" name="rows[${rowIndex}][task]"
-                   placeholder="Enter task"
-                   class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+        <td class="px-4 py-4">
+            <textarea name="rows[${rowIndex}][task]" rows="2" style="resize: none;"
+                class="w-full bg-white border border-gray-300 rounded px-2 py-2" required></textarea>
         </td>
 
-        <td class="py-3 px-4">
-            <input type="time" name="rows[${rowIndex}][start_time]"
-                   class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+        <td class="px-4 py-4">
+            <input type="time" name="rows[${rowIndex}][start_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
         </td>
 
-        <td class="py-3 px-4">
-            <input type="time" name="rows[${rowIndex}][end_time]"
-                   class="w-full bg-white border border-gray-300 rounded px-2 py-1" required>
+        <td class="px-4 py-4">
+            <input type="time" name="rows[${rowIndex}][end_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
         </td>
 
-        <td class="py-3 px-4 text-center">
-            <button type="button" onclick="deleteRow(this)"
-                    style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#FF3B30" viewBox="0 0 24 24">
-                    <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
-                </svg>
-            </button>
-        </td>
+        <td class="px-4 py-4 text-center">
+    <button type="button" onclick="deleteRow(this)" style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FF3B30" viewBox="0 0 24 24">
+            <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
+        </svg>
+    </button>
+</td>
     `;
 }
 
-/* ---------------------------------------
-   Delete row 
---------------------------------------- */
+/* Delete row */
 function deleteRow(btn) {
     const row = btn.closest("tr");
     const date = row.dataset.date;
@@ -326,7 +296,31 @@ function deleteRow(btn) {
         }
     }
 }
+
+/* Add "+ Add more task" button to existing dates after DOM loads */
+document.addEventListener("DOMContentLoaded", function() {
+    const dateCells = document.querySelectorAll("td.date-cell");
+    dateCells.forEach(cell => {
+        const dateValue = cell.dataset.date;
+        if (!cell.querySelector('button')) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.innerText = "+ Add more task";
+            btn.style.cssText = `
+                background-color: rgba(255, 157, 0, 0.59);
+                color:white;
+                padding:4px 10px;
+                border-radius:4px;
+                font-size:12px;
+                margin-top:6px;
+                width:100%;
+            `;
+            btn.onclick = () => addMoreTask(dateValue);
+            cell.appendChild(btn);
+        }
+    });
+});
 </script>
 
-</script>
+
 @endsection
