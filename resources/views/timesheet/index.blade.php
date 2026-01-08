@@ -58,8 +58,8 @@
                         Open
                     </span>
                 @elseif($t->status === 'submitted')
-                    <span class="px-4 py-1 rounded shadow inline-block text-white text-sm font-semibold"
-                        style="background-color: #3B82F6;">
+                    <span class="px-4 py-1 rounded shadow inline-block text-black text-sm font-semibold"
+                        style="background-color: #E5E7EB;">
                         Submitted
                     </span> 
                 @else
