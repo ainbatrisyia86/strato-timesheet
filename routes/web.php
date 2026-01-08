@@ -21,9 +21,9 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 /*
-|--------------------------------------------------------------------------
+|-----------------------------------------------------------------------
 | AUTHENTICATION ROUTES
-|--------------------------------------------------------------------------
+|-----------------------------------------------------------------------
 */
 Route::get('/register', [CustomAuthController::class, 'register'])->name('register');
 Route::post('/register', [CustomAuthController::class, 'storeUser']);

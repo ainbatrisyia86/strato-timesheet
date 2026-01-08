@@ -58,8 +58,8 @@
                         Open
                     </span>
                 @elseif($t->status === 'submitted')
-                    <span class="px-4 py-1 rounded shadow inline-block text-white text-sm font-semibold"
-                        style="background-color: #3B82F6;">
+                    <span class="px-4 py-1 rounded shadow inline-block text-black text-sm font-semibold"
+                        style="background-color: #E5E7EB;">
                         Submitted
                     </span> 
                 @else
@@ -72,20 +72,26 @@
 
                 <!-- Action -->
                 <td class="px-4 py-3 flex justify-center items-center gap-2">
-                    @if($isCurrentWeek)
-                        <a href="{{ route('timesheet.edit', Crypt::encrypt($t->id)) }}"
-                           class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
-                           style="background-color: rgba(255, 157, 0, 0.59);">
-                            Add/Edit
-                        </a>
-                    @else
-                        <a href="{{ route('timesheet.show', Crypt::encrypt($t->id)) }}"
-                           class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
-                           style="background-color: rgba(39, 173, 227, 0.59);">
-                            View
-                        </a>
-                    @endif
-                </td>
+
+      {{-- ADD / EDIT button (current week only) --}}
+    @if($isCurrentWeek)
+        <a href="{{ route('timesheet.edit', Crypt::encrypt($t->id)) }}"
+           class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
+           style="background-color: rgba(255, 157, 0, 0.59);">
+            Add/Edit
+        </a>
+    @endif
+
+    {{-- VIEW button --}}
+    <a href="{{ route('timesheet.show', Crypt::encrypt($t->id)) }}"
+       class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
+       style="background-color: rgba(39, 173, 227, 0.59);">
+        View
+    </a>
+
+</td>
+
+
             </tr>
         @endforeach
     </tbody>

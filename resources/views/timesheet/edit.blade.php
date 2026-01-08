@@ -12,7 +12,6 @@
     @csrf
     @method('PUT')
 
-
         <!-- Top Filters -->
         <div class="flex items-center gap-4 mb-6 justify-center">
 
@@ -76,16 +75,25 @@
                         @foreach($rows as $i => $row)
                             <tr class="border-b border-gray-300" data-date="{{ $date }}">
 
-                                {{-- DATE --}}
-                                @if($i === 0)
-                                    <td class="px-4 py-4 align-top text-center date-cell"
-                                        rowspan="{{ count($rows) }}" data-date="{{ $date }}">
-                                        <input type="date" name="rows[{{ $rowIndex }}][date]" value="{{ $date }}" 
-                                               min="{{ $timesheet->start_date->format('Y-m-d') }}" 
-                                               max="{{ $timesheet->end_date->format('Y-m-d') }}" 
-                                               class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
-                                    </td>
-                                @endif
+                                {{-- DATE - Restrict available dates based on week --}}
+                               @if($i === 0)
+    <td class="px-4 py-4 align-top text-center date-cell"
+        rowspan="{{ count($rows) }}"
+        data-date="{{ $date }}">
+
+        {{-- hidden date sent to backend --}}
+        <input type="hidden"
+               name="rows[{{ $rowIndex }}][date]"
+               value="{{ $date }}">
+
+        {{-- visible date text --}}
+        <div class="font-medium text-sm">
+            {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
+        </div>
+    </td>
+@endif
+
+
 
                                 {{-- PROJECT --}}
                                 <td class="px-4 py-4">
@@ -132,7 +140,7 @@
                         @endforeach
                     @endforeach
 
-                    <!-- ADD ROW BUTTON -->
+                    <!-- ADD ROW BUTTON - New Date -->
                     <tr id="add-row-wrapper" class="border-b border-gray-300">
                         <td class="px-4 py-4">
                             <button type="button" onclick="addRow()" class="px-4 py-2 rounded text-sm text-white flex items-center gap-2" style="background-color: #7BCAEA;">
@@ -182,7 +190,7 @@ const endDate   = '{{ $timesheet->end_date->format("Y-m-d") }}';
 const existingDates = @json($timesheet->rows->pluck('date')->unique()->values());
 
 /* Generate weekdays (Mon–Fri) */
-const weekDates = [];
+const weekDates = []; //array to store available dates for the week
 for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
     const day = d.getDay();
     if (day !== 0 && day !== 6) weekDates.push(new Date(d).toISOString().split('T')[0]);
@@ -321,6 +329,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+
+
 
 
 @endsection

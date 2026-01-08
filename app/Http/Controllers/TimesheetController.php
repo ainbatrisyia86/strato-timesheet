@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Contracts\Encryption\DecryptException;
 
 
-
 class TimesheetController extends Controller
 {
     // ------------------------------
@@ -24,7 +23,7 @@ class TimesheetController extends Controller
         return view('timesheet.create');
     }
 
-    // Store a new timesheet manually (optional)
+    // Store a new timesheet manually - Add button (optional)
     public function store(Request $request)
     {
         $userId = auth()->id();
@@ -66,13 +65,13 @@ class TimesheetController extends Controller
             ->with('success', 'Weekly timesheet created.');
     }
 
-    // List all timesheets of logged-in staff 
+    // List all timesheets of currently logged-in staff
     public function index()
 {
     // Gets currently logged-in user ID
     $userId = auth()->id();
 
-    // Current week start (Monday) & end (Friday) as Carbon object
+    // Current week start (Monday) & end (Friday) using Carbon object
     $startDateCarbon = Carbon::now()->startOfWeek(Carbon::MONDAY);
 
     $startDate = $startDateCarbon->toDateString();
@@ -88,8 +87,8 @@ class TimesheetController extends Controller
         Timesheet::create([
             'user_id'    => $userId,
             'week'       => $startDateCarbon->weekOfYear,  // week number
-            'month'      => $startDateCarbon->month,       // month of Monday
-            'year'       => $startDateCarbon->year,        // year of Monday
+            'month'      => \Carbon\Carbon::parse($startDate)->month,       // month of the start date (Monday
+            'year'       => $startDateCarbon->year,        // year of the start date (Monday)
             'start_date' => $startDate,
             'end_date'   => $weekEnd,
             'status'     => 'open',
@@ -107,37 +106,44 @@ class TimesheetController extends Controller
 }
 
 
-    // Show single timesheet with its rows
+    // Show single timesheet with its rows (View function)
     public function show($id)
 {
-    // Decrypt the ID
     try {
         $decryptedId = Crypt::decrypt($id);
-    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+    } catch (DecryptException $e) {
         abort(404);
     }
 
     // Load timesheet with rows and user
     $timesheet = Timesheet::with(['rows', 'user'])->findOrFail($decryptedId);
 
-    // Weekly total of hours (if stored)
+    // Group rows by date (this is the variable your Blade uses)
+    $groupedRows = $timesheet->rows->groupBy('date');
+
+    // Weekly total of hours
     $weeklyTotal = $timesheet->rows->sum('total_hours');
 
-    // Calculate total hours from start_time and end_time
+    // Optional: calculate hours from start_time / end_time
     $totalMinutes = 0;
     foreach ($timesheet->rows as $row) {
         if ($row->start_time && $row->end_time) {
-            $start = \Carbon\Carbon::createFromFormat('H:i:s', $row->start_time);
-            $end   = \Carbon\Carbon::createFromFormat('H:i:s', $row->end_time);
+            $start = Carbon::createFromFormat('H:i:s', $row->start_time);
+            $end   = Carbon::createFromFormat('H:i:s', $row->end_time);
             $totalMinutes += $start->diffInMinutes($end);
         }
     }
+    $totalHours = round($totalMinutes / 60, 2);
 
-    $totalHours = round($totalMinutes / 60, 2); // e.g. 7.50
-
-    // Return the correct view
-    return view('timesheet.show', compact('timesheet', 'weeklyTotal', 'totalHours'));
+    // Pass $groupedRows to the Blade view
+    return view('timesheet.show', compact(
+        'timesheet',
+        'groupedRows',  // ✅ add this
+        'weeklyTotal',
+        'totalHours'
+    ));
 }
+
 
 
     // Edit a timesheet
@@ -158,7 +164,7 @@ class TimesheetController extends Controller
 }
 
 
-    // Update a timesheet and its rows
+    // Update timesheet 
    public function update(Request $request, $id)
 {
     $timesheet = Timesheet::findOrFail($id);
@@ -187,7 +193,7 @@ class TimesheetController extends Controller
         }
 
         $start = isset($row['start_time']) ? Carbon::parse($row['start_time']) : null;
-$end   = isset($row['end_time']) ? Carbon::parse($row['end_time']) : null;
+        $end   = isset($row['end_time']) ? Carbon::parse($row['end_time']) : null;
 
 $totalHours = 0;
 
@@ -214,6 +220,7 @@ if ($start && $end) {
     return redirect()->route('timesheet.index')->with('success', 'Timesheet updated successfully!');
 }
 
+//To generate PDF export of timesheet
 public function exportPdf($id)
 {
     $timesheet = Timesheet::with('rows', 'user')->findOrFail($id);
