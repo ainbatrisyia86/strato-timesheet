@@ -8,10 +8,11 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Password; // This is for Password::reset()
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Illuminate\Validation\Rules\Password as PasswordRule; // Alternative import if needed
 
 class NewPasswordController extends Controller
 {
@@ -29,11 +30,19 @@ class NewPasswordController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-    {
+        {
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required', 
+                'confirmed', 
+                PasswordRule::min(8) // You need the Password:: class call here
+                    ->letters()   
+                    ->mixedCase() 
+                    ->numbers()   
+                    ->symbols(),  
+            ],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
