@@ -20,7 +20,7 @@
                         </div>
                         <div>
                             <label>Month</label>
-                            <input type="text" value="{{ $selectedMonth ? date('F', mktime(0,0,0,$selectedMonth,1)) : '-' }}" readonly class="border px-3 py-2 rounded bg-gray-100 w-32">
+                            <input type="text" value="{{ $selectedMonth ? date('F', mktime(0,0,0,month: $selectedMonth,1)) : '-' }}" readonly class="border px-3 py-2 rounded bg-gray-100 w-32">
                         </div>
                         <div>
                             <label>Year</label>

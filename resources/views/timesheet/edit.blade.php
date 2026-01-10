@@ -55,7 +55,7 @@
 
                 <thead>
                     <tr style="background-color: #818181;" class="text-white text-sm">
-                        <th class="px-4 py-4 text-left" style="border: 2px solid white; width: 15%;">DATE</th>
+                        <th class="px-4 py-4 " style="border: 2px solid white; width: 15%;">DATE</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">PROJECT</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">TASK</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">START</th>
@@ -77,21 +77,21 @@
 
                                 {{-- DATE - Restrict available dates based on week --}}
                                @if($i === 0)
-    <td class="px-4 py-4 align-top text-center date-cell"
-        rowspan="{{ count($rows) }}"
-        data-date="{{ $date }}">
+                                <td class="px-4 py-4 align-top text-center date-cell"
+                                    rowspan="{{ count($rows) }}"
+                                    data-date="{{ $date }}">
 
-        {{-- hidden date sent to backend --}}
-        <input type="hidden"
-               name="rows[{{ $rowIndex }}][date]"
-               value="{{ $date }}">
+                                    {{-- hidden date sent to backend --}}
+                                    <input type="hidden"
+                                        name="rows[{{ $rowIndex }}][date]"
+                                        value="{{ $date }}">
 
-        {{-- visible date text --}}
-        <div class="font-medium text-sm">
-            {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
-        </div>
-    </td>
-@endif
+                                    {{-- visible date text --}}
+                                    <div class="font-medium text-sm">
+                                        {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
+                                    </div>
+                                </td>
+                            @endif
 
 
 
@@ -169,19 +169,20 @@
         <div class="flex space-x-4 justify-center mt-10">
             <button type="submit" class="px-6 py-2 rounded flex text-white font-semibold shadow"
                 style="background-color:rgba(39,173,227,0.73)">
-                UPDATE
+                SAVE
             </button>
 
             <button type="submit" name="action" value="submit"
                 class="px-6 py-2 rounded flex text-white font-semibold shadow"
                 style="background-color: rgba(36,210,65,0.71);">
-                SUBMIT
+                SAVE & SUBMIT
             </button>
         </div>
     </form>
 </div>
 
 <script>
+
 let rowIndex = {{ count($timesheet->rows) }};
 const startDate = '{{ $timesheet->start_date->format("Y-m-d") }}';
 const endDate   = '{{ $timesheet->end_date->format("Y-m-d") }}';
@@ -189,12 +190,19 @@ const endDate   = '{{ $timesheet->end_date->format("Y-m-d") }}';
 /* Existing dates already saved in DB */
 const existingDates = @json($timesheet->rows->pluck('date')->unique()->values());
 
-/* Generate weekdays (Mon–Fri) */
-const weekDates = []; //array to store available dates for the week
-for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
-    const day = d.getDay();
-    if (day !== 0 && day !== 6) weekDates.push(new Date(d).toISOString().split('T')[0]);
+/* Generate week dates (Monday – Sunday) */
+const weekDates = []; // array to store available dates for the week
+
+const start = new Date(startDate);
+const end   = new Date(endDate);
+
+for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    // Push every day including Saturday & Sunday
+    weekDates.push(
+        new Date(d).toISOString().split('T')[0]
+    );
 }
+
 
 /* Available dates = weekdays minus existing */
 let availableDates = weekDates.filter(date => !existingDates.includes(date));
@@ -248,39 +256,56 @@ function addMoreTask(dateValue) {
 
 /* Task cells HTML */
 function taskCells(dateValue) {
+
+    // ISO day of week: Monday = 1, Sunday = 7
+    let jsDay = new Date(dateValue).getDay(); // JS: Sunday = 0, Monday = 1, ..., Saturday = 6
+    let isoDay = jsDay === 0 ? 7 : jsDay;     // Convert JS Sunday (0) → ISO 7
+
+    // Detect if it's weekend (Saturday = 6, Sunday = 7)
+    const isWeekend = isoDay === 6 || isoDay === 7;
+
+    // Remove 'required' for weekend, keep for weekdays
+    const requiredAttr = isWeekend ? '' : 'required';
+    const placeholderText = isWeekend ? 'Optional / Weekend' : '';
+
     return `
         <td class="px-4 py-4">
             <input type="hidden" name="rows[${rowIndex}][date]" value="${dateValue}">
-            <select name="rows[${rowIndex}][project]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
-                <option value="">Select Project</option>
-                <option>Project A</option>
-                <option>Project B</option>
-                <option>Project C</option>
+            
+            <select name="rows[${rowIndex}][project]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" ${requiredAttr}>
+                <option value="">-- Select Project --</option>
+                @php
+                    $projects = \DB::table('projects')->orderBy('name')->get();
+                @endphp
+                @foreach ($projects as $project)
+                    <option value="{{ $project->id }}">{{ $project->name }}</option>
+                @endforeach
             </select>
         </td>
 
         <td class="px-4 py-4">
             <textarea name="rows[${rowIndex}][task]" rows="2" style="resize: none;"
-                class="w-full bg-white border border-gray-300 rounded px-2 py-2" required></textarea>
+                class="w-full bg-white border border-gray-300 rounded px-2 py-2" ${requiredAttr} placeholder="${placeholderText}"></textarea>
         </td>
 
         <td class="px-4 py-4">
-            <input type="time" name="rows[${rowIndex}][start_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
+            <input type="time" name="rows[${rowIndex}][start_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" ${requiredAttr}>
         </td>
 
         <td class="px-4 py-4">
-            <input type="time" name="rows[${rowIndex}][end_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
+            <input type="time" name="rows[${rowIndex}][end_time]" class="w-full bg-white border border-gray-300 rounded px-2 py-2" ${requiredAttr}>
         </td>
 
         <td class="px-4 py-4 text-center">
-    <button type="button" onclick="deleteRow(this)" style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FF3B30" viewBox="0 0 24 24">
-            <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
-        </svg>
-    </button>
-</td>
+            <button type="button" onclick="deleteRow(this)" style="background-color: #FFE5E5; border: none; padding: 8px 10px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FF3B30" viewBox="0 0 24 24">
+                    <path d="M9 3V4H4V6H5V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V6H20V4H15V3H9ZM7 6H17V20H7V6ZM9 8V18H11V8H9ZM13 8V18H15V8H13Z"/>
+                </svg>
+            </button>
+        </td>
     `;
 }
+
 
 /* Delete row */
 function deleteRow(btn) {
@@ -305,7 +330,7 @@ function deleteRow(btn) {
     }
 }
 
-/* Add "+ Add more task" button to existing dates after DOM loads */
+/* Add "+ Add more task" button to existing dates  */
 document.addEventListener("DOMContentLoaded", function() {
     const dateCells = document.querySelectorAll("td.date-cell");
     dateCells.forEach(cell => {
