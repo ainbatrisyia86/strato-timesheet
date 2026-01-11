@@ -19,6 +19,7 @@ class TimesheetRow extends Model
     public $timestamps = false;
 
 
+    // each timesheet row belongs to a timesheet
      public function timesheet()
     {
         return $this->belongsTo(Timesheet::class);

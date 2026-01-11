@@ -28,7 +28,7 @@ class TimesheetRowController extends Controller
         'status' => $request->action === 'submit' ? 'Submitted' : 'Saved'
     ]);
 
-    // 2️⃣ Save each row in timesheet_rows
+    // Save each row in timesheet_rows
     foreach ($request->rows as $row) {
 
         $start = strtotime($row['start']);
@@ -38,7 +38,7 @@ class TimesheetRowController extends Controller
         TimesheetRow::create([
             'timesheet_id' => $timesheet->id,
             'date' => $row['date'],
-            'project' => $row['project'],
+            'project_id' => $row['project'],
             'task' => $row['task'],
             'start_time' => $row['start'],
             'end_time' => $row['end'],

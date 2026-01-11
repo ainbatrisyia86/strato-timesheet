@@ -50,14 +50,13 @@ class Timesheet extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Each timesheet can have many rows
-    // app/Models/Timesheet.php
-
+    // Relationship: 1 timesheet can have many timesheet rows
     public function rows()
     {
         return $this->hasMany(TimesheetRow::class);
     }
 
+    //Calculate total hours for all the rows of the timesheet
     public function getTotalHoursAttribute()
     {
         return $this->rows->sum('total_hours');

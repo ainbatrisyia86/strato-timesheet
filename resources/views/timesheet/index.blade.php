@@ -33,39 +33,64 @@
 
     <tbody style="background-color: #F3F3F3;">
         @foreach ($timesheets as $index => $t)
-            @php
-    $isCurrentWeek = \Carbon\Carbon::parse($t->start_date)->toDateString() === $currentWeekStart;
-@endphp
+
+        <!-- logic implementation for due date 10am monday -->
+        @php
+        $now = \Carbon\Carbon::now();
+
+        // Parse dates once (clean & readable)
+        $startDate = \Carbon\Carbon::parse($t->start_date);
+        $endDate   = \Carbon\Carbon::parse($t->end_date);
+
+        // ✅ Correct deadline: Monday AFTER week end, 10:00 AM
+        $deadline = $endDate->copy()->next(\Carbon\Carbon::MONDAY)->setTime(10,0,0);
+
+
+        // Check if today is within this timesheet week
+        $isCurrentWeek = $now->between($startDate, $endDate);
+
+        // ✅ Status logic
+            if ($t->submitted_at) {
+                $submittedAt = \Carbon\Carbon::parse($t->submitted_at);
+                if ($submittedAt->lte($deadline)) {
+                    $status = 'submitted'; // on time
+                } else {
+                    $status = 'late submission';
+                }
+            } else {
+                $status = 'not submitted';
+            }
+
+
+        @endphp
 
             <tr class="border-b" style="height: 45px;">
                 <!-- Week number -->
                 <td class="px-4 py-3">Week {{ $t->week }}</td>
 
-
                 <!-- Date range -->
                 <td class="px-4 py-3">
-    {{ \Carbon\Carbon::parse($t->start_date)->format('d M Y') }}
-    -
-    {{ \Carbon\Carbon::parse($t->end_date)->format('d M Y') }}
-</td>
-
+                {{ \Carbon\Carbon::parse($t->start_date)->format('d M Y') }}
+                -
+                {{ \Carbon\Carbon::parse($t->end_date)->format('d M Y') }}
+            </td>
 
                 <!-- Status -->
                 <td class="px-4 py-3 text-center">
-                @if($t->status === 'open')
-                    <span class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
-                        style="background-color: #22C55E;">
-                        Open
-                    </span>
-                @elseif($t->status === 'submitted')
-                    <span class="px-4 py-1 rounded shadow inline-block text-black text-sm font-semibold"
-                        style="background-color: #E5E7EB;">
+                @if($status === 'submitted')
+                    <span class="px-4 py-1 rounded shadow inline-block text-white text-sm font-semibold"
+                        style="background-color:#22C55E ;">
                         Submitted
-                    </span> 
+                    </span>
+                @elseif($status === 'late submission')
+                    <span class="px-3 py-1 rounded shadow inline-block text-white text-sm font-semibold"
+                        style="background-color: #FF3B30;">
+                        Late Submission
+                    </span>
                 @else
-                    <span class="px-3 py-1 rounded shadow inline-blocktext-gray-700 text-sm font-semibold"
+                    <span class="px-3 py-1 rounded shadow inline-block text-black text-sm font-semibold"
                         style="background-color: #E5E7EB;">
-                        {{ strtoupper($t->status) }}
+                        Pending
                     </span>
                 @endif
             </td>
@@ -73,14 +98,15 @@
                 <!-- Action -->
                 <td class="px-4 py-3 flex justify-center items-center gap-2">
 
-      {{-- ADD / EDIT button (current week only) --}}
-    @if($isCurrentWeek)
-        <a href="{{ route('timesheet.edit', Crypt::encrypt($t->id)) }}"
-           class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
-           style="background-color: rgba(255, 157, 0, 0.59);">
-            Add/Edit
-        </a>
-    @endif
+      {{-- ADD / EDIT button --}}
+        @if($status === 'not submitted')
+            <a href="{{ route('timesheet.edit', Crypt::encrypt($t->id)) }}"
+            class="text-white px-3 py-1 rounded shadow inline-block text-sm font-semibold"
+            style="background-color: rgba(255, 157, 0, 0.59);">
+                Add/Edit
+            </a>
+        @endif
+
 
     {{-- VIEW button --}}
     <a href="{{ route('timesheet.show', Crypt::encrypt($t->id)) }}"
