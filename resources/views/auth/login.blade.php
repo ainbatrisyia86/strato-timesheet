@@ -159,19 +159,22 @@
   </style>
 </head>
 <body>
-
+    <!-- left: logo -->
   <div class="card">
     <div class="left">
       <img src="{{ asset('images/strato_logo.png') }}" alt="Strato Solutions Logo">
     </div>
 
+    <!-- right: login form -->
     <div class="right">
       <div class="title">Log In</div>
 
-      @if ($errors->any())
+    <!-- display first validation error -->
+      @if ($errors->any() && !session('login_lock_seconds'))
         <div class="error">{{ $errors->first() }}</div>
       @endif
 
+      <!-- Display session success message -->
       @if(session('success'))
           <script>
               alert("{{ session('success') }}");
@@ -184,6 +187,7 @@
       <form method="POST" action="{{ url('/login') }}">
         @csrf
 
+        <!-- email input -->
         <div class="input">
           <!-- email icon -->
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -192,6 +196,7 @@
           <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required autofocus>
         </div>
 
+        <!-- password input -->
         <div class="input" style="position:relative;">
           <!-- lock icon -->
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -223,6 +228,7 @@
           </span>
         </div>
 
+        <!-- remember me & forgot password -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; margin-bottom:8px;">
           <label style="font-size:13px;color:#666;">
             <input type="checkbox" name="remember" style="margin-right:6px"> Remember me
@@ -230,21 +236,59 @@
           <a href="{{ route('password.request') }}" style="font-size:13px;color:#0D3B66;text-decoration:none;">Forgot?</a>
         </div>
 
+    @if(session('login_lock_seconds'))
+      <p class="error">
+          Too many login attempts. Please try again in 
+          <span id="countdown"></span>.
+      </p>
+
+      <script>
+          let countdown = {{ session('login_lock_seconds') }};
+          const countdownEl = document.getElementById('countdown');
+          const loginButton = document.querySelector('button[type="submit"]');
+          
+          if (loginButton) loginButton.disabled = true;
+
+          const updateDisplay = (s) => {
+              // This ensures it shows "53 seconds" or "1:00" instead of just "53"
+              if (s < 60) {
+                  countdownEl.innerText = s + " seconds";
+              } else {
+                  const m = Math.floor(s / 60);
+                  const sec = s % 60;
+                  countdownEl.innerText = `${m}:${sec < 10 ? '0' : ''}${sec}`;
+              }
+          };
+
+          updateDisplay(countdown);
+
+          const interval = setInterval(() => {
+              countdown--;
+              if (countdown <= 0) {
+                  clearInterval(interval);
+                  countdownEl.innerText = "0 seconds";
+                  if (loginButton) loginButton.disabled = false;
+                  // Optional: refresh page to clear error state
+                  // window.location.reload(); 
+              } else {
+                  updateDisplay(countdown);
+              }
+          }, 1000);
+      </script>
+  @endif
+
+        <!-- submit button -->
         <button type="submit" class="btn">Log In</button>
 
-        @if (Route::has('register'))
-          <div class="helper">
-            Don’t have an account?
-            <a href="{{ route('register') }}" style="color:#0D3B66; text-decoration:none; font-weight:600;">
-              Register
-            </a>
-          </div>
-        @endif
+        
 
       </form>
     </div>
   </div>
 
+  <!-- ===========================
+       Toggle password visibility
+  =========================== -->
   <script>
     const togglePassword = document.getElementById('toggle-password');
     const passwordField = document.getElementById('password-field');

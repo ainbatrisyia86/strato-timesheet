@@ -49,7 +49,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        RateLimiter::hit($this->throttleKey(),300);
     }
 
     /**

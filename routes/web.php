@@ -11,23 +11,29 @@ use App\Http\Controllers\SettingsController;
 | PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
+
+//Redirect root to timesheets index
 Route::get('/', function () {
     return redirect()->route('timesheet.index');
-})->middleware('auth');
+})->middleware('auth'); //only accessible if logged in
 
+// redirect any request to dashboard to /timesheets
 Route::get('/dashboard', function () {
-    // redirect any request to dashboard to /timesheets
     return redirect()->route('timesheet.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified']) //user must logged in and verified
+->name('dashboard');
 
 /*
 |-----------------------------------------------------------------------
 | AUTHENTICATION ROUTES
 |-----------------------------------------------------------------------
 */
+
+// Registration Routes
 Route::get('/register', [CustomAuthController::class, 'register'])->name('register');
 Route::post('/register', [CustomAuthController::class, 'storeUser']);
 
+// Login/Logout Routes
 Route::get('/login', [CustomAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [CustomAuthController::class, 'login']);
 Route::post('/logout', [CustomAuthController::class, 'logout'])->name('logout');
@@ -39,12 +45,12 @@ Route::post('/logout', [CustomAuthController::class, 'logout'])->name('logout');
 */
 Route::middleware('auth')->group(function () {
 
-    // ------------------- User Profile -------------------
+    // User Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // ------------------- Staff Timesheet Routes -------------------
+    //Staff Timesheet Routes
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':staff')->group(function () {
         Route::get('/timesheets', [TimesheetController::class, 'index'])->name('timesheet.index');
         Route::get('/timesheets/create', [TimesheetController::class, 'create'])->name('timesheet.create');

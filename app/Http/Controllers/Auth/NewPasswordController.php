@@ -18,6 +18,7 @@ class NewPasswordController extends Controller
 {
     /**
      * Display the password reset view.
+     * when user clicks the reset link in their email
      */
     public function create(Request $request): View
     {
@@ -25,9 +26,8 @@ class NewPasswordController extends Controller
     }
 
     /**
-     * Handle an incoming new password request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * Handle new password submission.
+     * this functions update user's password.
      */
     public function store(Request $request): RedirectResponse
         {
@@ -37,7 +37,7 @@ class NewPasswordController extends Controller
             'password' => [
                 'required', 
                 'confirmed', 
-                PasswordRule::min(8) // You need the Password:: class call here
+                PasswordRule::min(8)
                     ->letters()   
                     ->mixedCase() 
                     ->numbers()   
@@ -45,11 +45,16 @@ class NewPasswordController extends Controller
             ],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
+        /**
+         * Attempt to reset the password.
+         * Laravel automatically checks:
+         * - token validity
+         * - email existence
+         */
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
+            
+            //callback if reset is successful
             function (User $user) use ($request) {
                 $user->forceFill([
                     'password' => Hash::make($request->password),
@@ -60,9 +65,12 @@ class NewPasswordController extends Controller
             }
         );
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
+        /**
+         * If password reset is successful:
+         * - Redirect to login page
+         * Otherwise:
+         * - Return back with error message
+         */
         return $status == Password::PASSWORD_RESET
                     ? redirect()->route('login')->with('status', __($status))
                     : back()->withInput($request->only('email'))

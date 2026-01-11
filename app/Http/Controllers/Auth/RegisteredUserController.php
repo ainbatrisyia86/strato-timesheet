@@ -16,17 +16,16 @@ use Illuminate\Validation\Rules\Password;
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Display the registration page.
      */
     public function create(): View
     {
         return view('auth.register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     /**
+     * Handle user registration form submission.
+     * This function validates input and creates a new user.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -43,14 +42,19 @@ class RegisteredUserController extends Controller
             ],
         ]);
 
+        // Create new user record in database
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
+        // Trigger registered event (used for email verification if enabled)
         event(new Registered($user));
 
-        return redirect()->route('login')->with('success', 'You have successfully registered!');
+        // Redirect user to login page after successful registration
+        return redirect()
+        ->route('login')
+        ->with('success', 'You have successfully registered!');
     }
 }
