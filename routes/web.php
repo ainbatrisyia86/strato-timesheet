@@ -5,6 +5,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\CustomAuthController;
 use App\Http\Controllers\SettingsController;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +24,13 @@ Route::get('/dashboard', function () {
     return redirect()->route('timesheet.index');
 })->middleware(['auth', 'verified']) //user must logged in and verified
 ->name('dashboard');
+
+Route::post('/check-current-password', function (Request $request) {
+    // Returns true if match, false if not
+    return response()->json([
+        'match' => Hash::check($request->current_password, auth()->user()->password)
+    ]);
+})->middleware('auth')->name('password.check');
 
 /*
 |-----------------------------------------------------------------------

@@ -236,46 +236,50 @@
           <a href="{{ route('password.request') }}" style="font-size:13px;color:#0D3B66;text-decoration:none;">Forgot?</a>
         </div>
 
-    @if(session('login_lock_seconds'))
+      @if(session('login_lock_seconds'))
       <p class="error">
           Too many login attempts. Please try again in 
           <span id="countdown"></span>.
       </p>
 
       <script>
+          // 1. Get the number of seconds directly from the session
           let countdown = {{ session('login_lock_seconds') }};
           const countdownEl = document.getElementById('countdown');
           const loginButton = document.querySelector('button[type="submit"]');
           
+          // Disable the button immediately
           if (loginButton) loginButton.disabled = true;
 
           const updateDisplay = (s) => {
-              // This ensures it shows "53 seconds" or "1:00" instead of just "53"
               if (s < 60) {
                   countdownEl.innerText = s + " seconds";
               } else {
                   const m = Math.floor(s / 60);
                   const sec = s % 60;
-                  countdownEl.innerText = `${m}:${sec < 10 ? '0' : ''}${sec}`;
+                  // This will turn 300 into "5:00"
+                  countdownEl.innerText = `${m}:${sec < 10 ? '0' : ''}${sec} minutes`;
               }
           };
 
+          // Run once immediately so the user doesn't see a blank space
           updateDisplay(countdown);
 
           const interval = setInterval(() => {
               countdown--;
+              
               if (countdown <= 0) {
                   clearInterval(interval);
                   countdownEl.innerText = "0 seconds";
                   if (loginButton) loginButton.disabled = false;
-                  // Optional: refresh page to clear error state
+                  // Optional: reload to clear error state
                   // window.location.reload(); 
               } else {
                   updateDisplay(countdown);
               }
           }, 1000);
       </script>
-  @endif
+    @endif
 
         <!-- submit button -->
         <button type="submit" class="btn">Log In</button>

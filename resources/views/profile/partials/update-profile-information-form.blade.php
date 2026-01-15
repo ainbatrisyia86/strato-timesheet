@@ -1,85 +1,71 @@
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Your account profile information and email address.") }}
-        </p>
-    </header>
-
-    <!-- Email verification form (keep this) -->
+    {{-- Email verification form (keep this for logic) --}}
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <!-- Name -->
-    <div class="mt-6">
-        <x-input-label for="name" :value="__('Name')" />
-        <x-text-input
-            id="name"
-            type="text"
-            class="mt-1 block w-full bg-white cursor-not-allowed"
-            :value="$user->name"
-            readonly
-        />
-    </div>
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div>
+            <x-input-label for="name" :value="__('Name')" class="text-gray-500 ml-1" />
 
-    <!-- Email -->
-    <div class="mt-6">
-        <x-input-label for="email" :value="__('Email')" />
-        <x-text-input
-            id="email"
-            type="email"
-            class="mt-1 block w-full bg-white cursor-not-allowed"
-            :value="$user->email"
-            readonly
-        />
-
-        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-            <div>
-                <p class="text-sm mt-2 text-gray-800">
-                    {{ __('Your email address is unverified.') }}
-
-                    <button
-                        form="send-verification"
-                        class="underline text-sm text-gray-600 hover:text-gray-900"
-                    >
-                        {{ __('Click here to re-send the verification email.') }}
-                    </button>
-                </p>
-
-                @if (session('status') === 'verification-link-sent')
-                    <p class="mt-2 font-medium text-sm text-green-600">
-                        {{ __('A new verification link has been sent to your email address.') }}
-                    </p>
-                @endif
+            <div class="relative mt-1">
+                <input id="name" type="text" 
+                    class="block w-full border-transparent text-black cursor-not-allowed rounded-md pr-10 focus:ring-0 focus:border-transparent shadow-none ring-0" 
+                    style="background-color: #DCDCDC;"
+                    value="{{ $user->name }}" 
+                    readonly>
             </div>
-        @endif
-    </div>
+        </div>
 
-    <!-- Position -->
-    <div class="mt-6">
-        <x-input-label for="position" :value="__('Position')" />
-        <x-text-input
-            id="position"
-            type="text"
-            class="mt-1 block w-full bg-white cursor-not-allowed"
-            :value="$user->position"
-            readonly
-        />
-    </div>
+        <div>
+            <x-input-label for="email" :value="__('Email')" class="text-gray-500 ml-1" />
+            <div class="relative mt-1">
+                <input id="email" type="email" 
+                    class="block w-full border-transparent bg-gray-200/50 text-black cursor-not-allowed rounded-md pr-10 focus:ring-0 focus:border-transparent shadow-none ring-0" 
+                    style="background-color: #DCDCDC;"
+                    value="{{ $user->email }}" 
+                    readonly>
+            </div>
 
-    <!-- Department -->
-    <div class="mt-6">
-        <x-input-label for="department" :value="__('Department')" />
-        <x-text-input
-            id="department"
-            type="text"
-            class="mt-1 block w-full bg-white cursor-not-allowed"
-            :value="$user->department"
-            readonly
-        />
+            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                <div class="mt-2">
+                    <p class="text-sm text-gray-800">
+                        {{ __('Your email address is unverified.') }}
+                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900">
+                            {{ __('Click here to re-send verification.') }}
+                        </button>
+                    </p>
+                    @if (session('status') === 'verification-link-sent')
+                        <p class="mt-2 font-medium text-sm text-green-600">
+                            {{ __('A new verification link has been sent.') }}
+                        </p>
+                    @endif
+                </div>
+            @endif
+        </div>
+
+        <div>
+            <x-input-label for="position" :value="__('Position')" class="text-gray-500 ml-1" />
+            <div class="relative mt-1">
+                <input id="position" type="text" 
+                    class="block w-full border-transparent bg-gray-200/50 text-black cursor-not-allowed rounded-md pr-10 focus:ring-0 focus:border-transparent shadow-none ring-0" 
+                    style="background-color: #DCDCDC;"
+                    value="{{ $user->position ?? 'Not Assigned' }}" 
+                    readonly>
+            </div>
+        </div>
+
+        <div>
+            <x-input-label for="department" :value="__('Department')" class="text-gray-500 ml-1" />
+            <div class="relative mt-1">
+                <input id="department" type="text" 
+                    class="block w-full border-transparent bg-gray-200/50 text-black cursor-not-allowed rounded-md pr-10 focus:ring-0 focus:border-transparent shadow-none ring-0" 
+                    style="background-color: #DCDCDC;"
+                    value="{{ $user->department ?? 'Not Assigned' }}" 
+                    readonly>
+            </div>
+        </div>
     </div>
 </section>
