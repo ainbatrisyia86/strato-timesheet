@@ -58,8 +58,8 @@
                         <th class="px-4 py-4 " style="border: 2px solid white; width: 15%;">DATE</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">PROJECT</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 30%;">TASK</th>
-                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">START</th>
-                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">END</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">START TIME</th>
+                        <th class="px-4 py-4" style="border: 2px solid white; width: 12.5%;">END TIME</th>
                         <th class="px-4 py-4" style="border: 2px solid white; width: 10%;">ACTION</th>
                     </tr>
                 </thead>
@@ -93,17 +93,22 @@
                                 </td>
                             @endif
 
-
-
                                 {{-- PROJECT --}}
                                 <td class="px-4 py-4">
-                                    <select name="rows[{{ $rowIndex }}][project]"
-                                            class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
-                                        <option value="">Select Project</option>
-                                        @foreach(['Project A','Project B','Project C'] as $p)
-                                            <option value="{{ $p }}" {{ $row->project == $p ? 'selected' : '' }}>{{ $p }}</option>
-                                        @endforeach
-                                    </select>
+                                   @php
+                                    $projects = \DB::table('projects')->orderBy('name')->get();
+                                @endphp
+
+                                <select name="rows[{{ $rowIndex }}][project]"
+                                        class="w-full bg-white border border-gray-300 rounded px-2 py-2" required>
+                                    <option value="">Select Project</option>
+                                    @foreach($projects as $project)
+                                        <option value="{{ $project->name }}" {{ $row->project == $project->name ? 'selected' : '' }}>
+                                            {{ $project->name ?: 'Unnamed Project' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
                                 </td>
 
                                 {{-- TASK --}}
@@ -144,7 +149,7 @@
                     <tr id="add-row-wrapper" class="border-b border-gray-300">
                         <td class="px-4 py-4">
                             <button type="button" onclick="addRow()" class="px-4 py-2 rounded text-sm text-white flex items-center gap-2" style="background-color: #7BCAEA;">
-                                <span class="text-lg">+</span> ADD
+                                <span class="text-lg">+</span> ADD DATE 
                             </button>
                         </td>
                         <td colspan="5"></td>
@@ -172,7 +177,8 @@
                 SAVE
             </button>
 
-            <button type="submit" name="action" value="submit"
+             <button type="submit" name="action" value="submit"
+                id="submit-btn"
                 class="px-6 py-2 rounded flex text-white font-semibold shadow"
                 style="background-color: rgba(36,210,65,0.71);">
                 SAVE & SUBMIT
@@ -239,20 +245,36 @@ function addFirstTaskRow(dateValue) {
 
 /* + Add more task (same day) */
 function addMoreTask(dateValue) {
+
+    //debugger; // <- the browser will pause here
+
+    console.log("Adding task for date:", dateValue);
+
     const dateCell = document.querySelector(`td.date-cell[data-date="${dateValue}"]`);
+    console.log("Found dateCell:", dateCell);
+
     const currentRowspan = parseInt(dateCell.getAttribute("rowspan"));
+    console.log("Current rowspan:", currentRowspan);
+
     dateCell.setAttribute("rowspan", currentRowspan + 1);
 
     const row = document.createElement("tr");
     row.dataset.date = dateValue;
     row.innerHTML = taskCells(dateValue);
 
-    const allRows = document.querySelectorAll(`tr[data-date="${dateValue}"]`);
-    const lastRow = allRows[allRows.length - 1];
+    const allRowsForDate = document.querySelectorAll(`tr[data-date="${dateValue}"]`);
+    console.log("All rows for this date:", allRowsForDate);
+
+    const lastRow = allRowsForDate[allRowsForDate.length - 1];
+    console.log("Inserting after row:", lastRow);
+
     lastRow.after(row);
 
     rowIndex++;
+    console.log("rowIndex now:", rowIndex);
 }
+
+
 
 /* Task cells HTML */
 function taskCells(dateValue) {
@@ -278,7 +300,7 @@ function taskCells(dateValue) {
                     $projects = \DB::table('projects')->orderBy('name')->get();
                 @endphp
                 @foreach ($projects as $project)
-                    <option value="{{ $project->id }}">{{ $project->name }}</option>
+                    <option value="{{ $project->name }}">{{ $project->name }}</option>
                 @endforeach
             </select>
         </td>
@@ -353,6 +375,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+
+// Confirmation popup for "SAVE & SUBMIT"
+document.getElementById('submit-btn').addEventListener('click', function(e) {
+    const confirmed = confirm("Are you sure you want to submit this timesheet? \nOnce submitted, you cannot edit it.");
+    if (!confirmed) {
+        e.preventDefault(); // stop form submission if Cancel
+    }
+});
+
 </script>
 
 

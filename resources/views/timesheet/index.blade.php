@@ -64,9 +64,7 @@
 
         @endphp
 
-            <tr class="border-b" style="height: 45px;">
-                <!-- Week number -->
-                <td class="px-4 py-3">Week {{ $t->week }}</td>
+<tr class="border-b" style="height: 45px; @if($loop->first) background-color: rgba(240, 243, 138, 0.37); @endif">                <td class="px-4 py-3">Week {{ $t->week }}</td>
 
                 <!-- Date range -->
                 <td class="px-4 py-3">

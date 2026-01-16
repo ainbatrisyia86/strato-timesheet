@@ -77,11 +77,12 @@
                         @endif
 
                         {{-- PROJECT --}}
-                        <td class="py-3 px-4">
-                            <input type="text" value="{{ $row->project }}"
-                                class="w-full border border-gray-300 rounded px-2 py-1 bg-white"
-                                readonly>
-                        </td>
+                       <td class="py-3 px-4">
+                        <input type="text" value="{{ $row->project ?: 'Unnamed Project' }}"
+                            class="w-full border border-gray-300 rounded px-2 py-1 bg-white"
+                            readonly>
+                    </td>
+
 
                         {{-- TASK --}}
                         <td class="py-3 px-4">

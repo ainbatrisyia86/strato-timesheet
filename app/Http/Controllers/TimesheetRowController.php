@@ -38,7 +38,7 @@ class TimesheetRowController extends Controller
         TimesheetRow::create([
             'timesheet_id' => $timesheet->id,
             'date' => $row['date'],
-            'project_id' => $row['project'],
+            'name' => $row['project'],
             'task' => $row['task'],
             'start_time' => $row['start'],
             'end_time' => $row['end'],
